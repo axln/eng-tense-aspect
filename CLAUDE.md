@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Do not commit or push until the user explicitly asks.** Make the changes, verify them, and stop; leave them uncommitted in the working tree. A request to make a change is not a request to commit it, and an earlier "commit and push" does not carry over to later changes.
 
+**The deploy workflow pushes to `main` too** (see *Deployment*): after every deploy it commits a version bump, so the remote is usually one commit ahead of the local branch. Run `git pull --rebase` before pushing, or the push is rejected.
+
 ## Project
 
 A Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). Tests use vitest; there is no linter configured.
@@ -18,6 +20,14 @@ A Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app that generates English sent
 - `yarn test` — run all tests once (`yarn test:watch` to keep them running). One file: `yarn vitest run src/lib/Grammar.test.ts`; one test by name: `yarn vitest run -t "shall not"`
 
 Always run type checks through `yarn run check` (or pass `--tsconfig ./tsconfig.app.json`). A bare `npx svelte-check` picks up the root `tsconfig.json`, which has `files: []`, so it checks nothing and reports 0 errors.
+
+## Deployment (GitHub Pages)
+
+Pushing to `main` runs `.github/workflows/deploy.yml`: `yarn install --frozen-lockfile`, `yarn bump-version`, `yarn run check`, `yarn test`, `yarn build`, then it publishes `dist/` to https://axln.github.io/eng-tense-aspect/, and finally commits the version bump back to `main`. A type error or a failing test stops the deploy. It can also be run by hand from the Actions tab (`workflow_dispatch`). The repository's Pages source must be set to **GitHub Actions** (Settings → Pages), otherwise the Pages steps fail.
+
+- **The version bump.** `scripts/bump-version.mjs` adds 1 to the patch number in `package.json`, once per deploy, and the workflow commits it as `chore: bump version to vX.Y.Z [skip ci]` by `github-actions[bot]`. That is why the workflow has `contents: write`, and why the job is skipped when the commit message contains `[skip ci]`: the bump commit must not trigger another deploy. Do not bump the version by hand for a normal change. Nothing in the app shows the version yet.
+- **Branch protection on `main` will break the last step** unless `github-actions[bot]` may bypass it: the site still deploys (the push comes last), but the job goes red.
+- The site lives under a sub-path, so `vite.config.ts` sets `base: "/eng-tense-aspect/"`, and the dev server is at http://localhost:5173/eng-tense-aspect/. Vite prefixes the paths in `index.html` by itself, but **a path written in a component does not get the prefix**: use `import.meta.env.BASE_URL` (as the logo in `App.svelte` does) rather than `src="/favicon.svg"`, which would 404 on Pages. Renaming the repository means changing `base`.
 
 ## The `~` alias
 
@@ -123,5 +133,5 @@ A bug found in the English output should get a test that fails first, then the f
 
 The audience is ESL learners, so the output must stay within everyday modern English: no archaic forms (`amn't`, `mayn't`, `shan't`), and no form a learner would be marked wrong for using. Where English has a gap or an awkward form, the app should produce what a teacher would actually teach.
 
-- `yarn run check` reports 5 `Object is possibly 'undefined'` errors (`Verb.ts:41`, `BeVerb.ts:17,20,21,29`), all from `this.subject` being optional in `Verb`. They don't affect `yarn dev`/`yarn build`.
+- `yarn run check` is clean and must stay so: the deploy runs it. A present or past verb form needs a subject, and `Verb.requireSubject()` is the one place that says so (with a clear error) instead of dereferencing the optional `this.subject`; use it rather than a `!` assertion.
 - The `should not` → `shouldn't` contraction rule is dead: negative modals are already rendered as `shouldn't` before contractions run.
