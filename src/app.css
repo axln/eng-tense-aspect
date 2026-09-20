@@ -1,4 +1,9 @@
-@import "tailwindcss";
+/* Scan only the Svelte components for class names. By default Tailwind reads
+   every text file in the project, so the class names quoted in CLAUDE.md, or
+   any word in a comment or a test that happens to be a utility ("table",
+   "block"), would generate CSS that nothing uses. */
+@import "tailwindcss" source(none);
+@source "./**/*.svelte";
 
 /* Design tokens. `static` makes Tailwind emit every variable even when no
    utility uses it. Word.svelte builds its stripe gradient from
