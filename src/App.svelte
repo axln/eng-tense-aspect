@@ -78,7 +78,12 @@
 <main class="mx-auto max-w-[932px] px-4 pt-5 pb-15">
   <h1 class="my-[0.67em] flex items-center gap-2.5 text-[28px] font-semibold tracking-[-0.01em] text-brand">
     <img class="flex-none" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="36" height="36" />
-    Sentence Constructor
+    <!-- The version sits inside the title's own text, so it shares its baseline
+         instead of being centred against the 36px logo. -->
+    <span>
+      Sentence Constructor
+      <span class="text-[14px] font-normal tracking-normal text-[#b3b3b3]">v{__APP_VERSION__}</span>
+    </span>
   </h1>
 
   <p class="my-4 max-w-[640px] text-[#666]">
@@ -183,6 +188,4 @@
       {/each}
     </div>
   {/if}
-
-  <p class="mt-10 text-center text-[12px] text-[#999]">v{__APP_VERSION__}</p>
 </main>
