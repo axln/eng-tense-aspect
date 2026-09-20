@@ -46,6 +46,7 @@ export function buildSentence({
   interrogative,
   subject,
   contract,
+  object,
 }: SentenceParams): Word[] {
   const verbChain = buildVerbChain(verb, verbMode);
   // const { mode, modalVerb, negative, interrogative } = params;
@@ -84,6 +85,14 @@ export function buildSentence({
     words.splice(1, 0, subject.renderToWord());
   } else {
     words.unshift(subject.renderToWord());
+  }
+
+  // the object (complement) closes the sentence, after the whole verb chain
+  if (object) {
+    words.push({
+      text: object,
+      role: WordRole.object,
+    });
   }
 
   // apply contractions
@@ -125,6 +134,7 @@ export type SentenceParams = {
   negative: boolean;
   interrogative: boolean;
   contract: boolean;
+  object?: string;
 };
 
 export enum SentenceMode {

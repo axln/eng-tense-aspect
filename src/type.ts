@@ -5,6 +5,7 @@ export enum WordRole {
   negation = "negation",
   modal = "modal",
   subject = "subject",
+  object = "object",
   end = "end",
 }
 
@@ -20,13 +21,16 @@ export enum GrammarPerson {
   third = "third",
 }
 
-/*
 export type VerbObjects = {
   active: string[];
   passive?: string[];
+  // transitive verbs sound unfinished without an object ("I bring."), so the
+  // UI offers no "no object" choice for them. Only the active voice is
+  // affected: in the passive the object has become the subject, which leaves
+  // "It is brought." complete on its own.
+  required?: boolean;
 };
 
 export type Objects = {
   [key: string]: VerbObjects;
 };
-*/
