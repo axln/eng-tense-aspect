@@ -27,7 +27,7 @@ Always run type checks through `yarn run check` (or pass `--tsconfig ./tsconfig.
 
 ## Architecture
 
-The core is a pure sentence-building pipeline in `src/lib/`, kept free of UI concerns. The UI lives in `src/App.svelte` (controls) and `src/component/` (`Sentence.svelte`, `Word.svelte`), and is written with Svelte 5 runes (`$state`, `$derived`, `$props`).
+The core is a pure sentence-building pipeline in `src/lib/`, kept free of UI concerns. The UI lives in `src/App.svelte` (controls) and `src/component/` (`Sentence.svelte`, `Word.svelte`), and is written with Svelte 5 runes (`$state`, `$derived`, `$props`). The colour of each part of the sentence is defined once, as `--role-*` custom properties in `src/app.css`, and used by both the word tiles (`Word.svelte`) and the control that picks that part (the subject, verb, object and modal fields and the passive and negative checkboxes in `App.svelte`), so a control visibly matches the tile it produces. `--role-contraction` is the odd one out: a contraction is a property of a word rather than a part of speech, so it is drawn as a stripe under the tile (see *Contracted words* below), and the contractions checkbox uses it too. Change a colour there, not in either component.
 
 `src/lib/SentenceSpec.ts` is the bridge between them. It holds `SentenceSpec`, a flat record of exactly what the controls bind to, plus the dropdown option lists and `specToParams`, which turns a spec into a fresh `SentenceParams`. Build the params fresh on every render: `buildSentence` mutates the verbs it is handed (it sets their `form`), so a reused `Verb` instance produces wrong output the second time.
 
@@ -50,6 +50,21 @@ The three aspect checkboxes (perfect, continuous, passive) map straight onto `ve
 `contractible` in `Helper.ts` encodes where English blocks a subject+verb contraction: when the verb is **stranded** at the end of the clause with the rest elided (`Yes, he is.`, never `Yes, he's.`), when it is a **semantic verb** rather than an auxiliary (`I have a car`, not `I've a car`), and when the **modal is being negated** (`I shall not go`, not the archaic `I'll not go`; the other negated modals have already become `won't`, `mustn't` etc. by then, so only `shall` reaches this check). The copula is the exception to the second rule — it carries `WordRole.verb` because it is the only verb in the chain, but `He's hungry.` is ordinary English, so `beForms` lets it contract. Stranding is detected by position: the end punctuation has not been appended yet, so the last element of the array is the last word of the clause.
 
 `am not` is the gap in the negation paradigm — there is no standard `amn't` — and it is the only negation whose form depends on the sentence type, so `BeVerb` overrides `renderToWords`: a question takes suppletive `aren't I`, a statement emits an uncontracted `am` + `not` and lets the subject contract instead, giving `I'm not`. `BaseVerb.interrogative` exists solely to carry that distinction down from `buildSentence`.
+
+### Contracted words
+
+A contracted word is several words written as one, so a `Word` made by a contraction carries `parts` (`{ text, role }[]`, defined in `src/type.ts`): `I'm` in `I'm asked` is the subject `I` + the passive auxiliary `'m`, and `hasn't` is the auxiliary `has` + the negation `n't`. Each part keeps the role it had before the words merged. `Word.svelte` draws the word as **one unbroken piece of text** on horizontal stripes: one equal stripe per part in reading order, each labelled with its role, plus a lavender `ctr` stripe for the contraction itself — so `I'm asked` shows pink, turquoise and lavender. Do not draw the parts as separate side-by-side cells: `She's` then reads as `She 's`, which is exactly the confusion a learner should not get. The invariants, all checked in `Parts.test.ts` across every combination:
+
+- exactly the words with `form === "ctr"` have `parts`, and there are always at least two;
+- the parts' texts joined equal `word.text`, and `word.role` is the first part's role, so anything that ignores `parts` still works;
+- the end punctuation and the object are never part of a contraction.
+
+There are two ways a contracted word is made, and both go through `contractedWord` / `contractedNegative` in `Helper.ts`, never a hand-built object:
+
+1. **Merging two neighbours** (`mergeWords`, from the rule table): cut the contracted spelling at the apostrophe (`he|'s`, `should|'ve`), or, with none (`can not` → `cannot`), at the length of the first word (`can|not`).
+2. **A negative rendered by a verb** (`Verb`, `Modal`, `BeVerb`): every contracted negative ends in `n't`, so the cut is always before those three letters, including the irregular `ca|n't` and `wo|n't`.
+
+Anything that edits the text of a word must keep `parts` in step; that is what `capitalizeWord` is for (`he's` → `He` + `'s`). Use it rather than assigning to `word.text`. A word that is already a contraction is never merged again (no rule produces one); `mergeWords` keeps it whole rather than guess a cut.
 
 ### Text convention
 
