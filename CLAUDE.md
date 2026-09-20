@@ -8,13 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A Svelte 5 + Vite + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). There is no test runner or linter configured.
+A Svelte 5 + Vite + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). Tests use vitest; there is no linter configured.
 
 ## Commands
 
 - `yarn dev` — Vite dev server
 - `yarn build` / `yarn preview` — production build / serve it
 - `yarn run check` — `svelte-check --tsconfig ./tsconfig.app.json` then `tsc -p tsconfig.node.json`
+- `yarn test` — run all tests once (`yarn test:watch` to keep them running). One file: `yarn vitest run src/lib/Grammar.test.ts`; one test by name: `yarn vitest run -t "shall not"`
 
 Always run type checks through `yarn run check` (or pass `--tsconfig ./tsconfig.app.json`). A bare `npx svelte-check` picks up the root `tsconfig.json`, which has `files: []`, so it checks nothing and reports 0 errors.
 
@@ -41,12 +42,12 @@ The three aspect checkboxes (perfect, continuous, passive) map straight onto `ve
 `buildSentence` (`src/lib/Sentence.ts`) is the entry point. It turns `SentenceParams` (mode, subject `Pronoun`, `verb`, `verbMode` flags for passive/continuous/perfect, negative, interrogative, contract, optional `Modal`) into a `Word[]` (`{ text, role, form? }`, defined in `src/type.ts`) in these steps:
 
 1. **Verb chain** — `buildVerbChain` wraps the main verb by *prepending* auxiliaries in a fixed order: passive (`be` + v3), then continuous (`be` + ing), then perfect (`have` + v3). It also sets `form` on the head of the chain at each step, so the order of these blocks matters.
-2. **Finite verb** — for `ModalVerb` mode the `Modal` is prepended. Otherwise `do` is prepended if the sentence is negative/interrogative and the first verb isn't `be`/`have` (do-support), and `makePersonal(subject, isPresent)` sets the head verb to present or past agreeing with the subject.
+2. **Finite verb** — for `ModalVerb` mode the `Modal` is prepended. Otherwise `do` is prepended if the sentence is negative/interrogative and the first verb is neither `be` nor an *auxiliary* `have` (do-support), and `makePersonal(subject, isPresent)` sets the head verb to present or past agreeing with the subject. Main-verb `have` **does** take do-support (`I don't have a car`, not the formal `I haven't a car`); only its `WordRole` (`verb` vs `aux`) tells the two apart, so don't test `firstVerb.base` alone.
 3. **Negation** — flags `negative`/`contract` are set on the *first* verb in the chain only; the verb's `renderToWords` emits either `not` or an `n't` suffix.
 4. **Render, subject and object placement** — each verb renders to `Word[]`; the subject goes first, or after the first word for interrogative inversion; the optional `object` string is appended after the whole verb chain as a single `WordRole.object` word (a phrase like `a new phone` is one tile, not split).
 5. **Contractions** — `applyContractions` (`src/lib/Helper.ts`) rewrites adjacent word pairs from the rule table in `src/spelling/Contractions.ts` (only when `contract`), and `can not` → `cannot` always applies. Finally, the end punctuation is appended and the first word capitalised.
 
-`contractible` in `Helper.ts` encodes where English blocks a subject+verb contraction: when the verb is **stranded** at the end of the clause with the rest elided (`Yes, he is.`, never `Yes, he's.`), and when it is a **semantic verb** rather than an auxiliary (`I have a car`, not `I've a car`). The copula is the exception to the second rule — it carries `WordRole.verb` because it is the only verb in the chain, but `He's hungry.` is ordinary English, so `beForms` lets it contract. Stranding is detected by position: the end punctuation has not been appended yet, so the last element of the array is the last word of the clause.
+`contractible` in `Helper.ts` encodes where English blocks a subject+verb contraction: when the verb is **stranded** at the end of the clause with the rest elided (`Yes, he is.`, never `Yes, he's.`), when it is a **semantic verb** rather than an auxiliary (`I have a car`, not `I've a car`), and when the **modal is being negated** (`I shall not go`, not the archaic `I'll not go`; the other negated modals have already become `won't`, `mustn't` etc. by then, so only `shall` reaches this check). The copula is the exception to the second rule — it carries `WordRole.verb` because it is the only verb in the chain, but `He's hungry.` is ordinary English, so `beForms` lets it contract. Stranding is detected by position: the end punctuation has not been appended yet, so the last element of the array is the last word of the clause.
 
 `am not` is the gap in the negation paradigm — there is no standard `amn't` — and it is the only negation whose form depends on the sentence type, so `BeVerb` overrides `renderToWords`: a question takes suppletive `aren't I`, a statement emits an uncontracted `am` + `not` and lets the subject contract instead, giving `I'm not`. `BaseVerb.interrogative` exists solely to carry that distinction down from `buildSentence`.
 
@@ -68,6 +69,16 @@ All word text is kept **lowercase** throughout the pipeline; only the first word
 ### Spelling data
 
 `src/spelling/VerbList.ts` (regular verbs) and `IrregularVerbList.ts` are lookup tables keyed by base form. An empty `{}` entry means all forms are built by appending `-s`/`-ed`/`-ing`; only exceptions are listed (`thirdSingular`, `ing`, `ed`, `past`, `v3`). **A verb missing from the relevant list makes `getSpellingInfo` return `undefined`, which crashes in `getVerbForm`.** Add new verbs to the list, using `IrregularVerb` for entries in `IrregularVerbList.ts`. `have` and `do` used as auxiliaries are `IrregularVerb`s too.
+
+## Tests
+
+Tests live beside the code as `src/lib/*.test.ts`, and `src/lib/testHelper.ts` exports `say(options)`, which builds a sentence as plain text with every option defaulted (`say({ subject: "I", verb: "have:i", object: "a car", contract: true })` → `"I have a car."`). Use it rather than constructing `SentenceParams` by hand.
+
+- `Contractions.test.ts` — what contracts and what must not, plus a sweep of tens of thousands of combinations for forms English forbids (`amn't`, `shan't`, a stranded `he's.`, a contracted main-verb `have`).
+- `Grammar.test.ts` — do-support, agreement, the three aspects, question inversion, object placement.
+- `Verb.test.ts` — known irregular spellings, plus rule checks over **every** verb in the lists. The spelling tables only hold exceptions, so a verb that needs one and lacks it fails silently (`catchs`, `giveing`); adding a verb to the lists is covered by those checks.
+
+A bug found in the English output should get a test that fails first, then the fix.
 
 ## Known state
 
