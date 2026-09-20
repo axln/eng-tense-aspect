@@ -1,26 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <title>eng-tense-aspect</title>
-  <!-- Two chevrons stepping forward and up: tense is movement through time.
-       They are offset rather than aligned so the mark reads as motion instead
-       of a "next" button. The middle stop matches the app title colour. -->
+  <!-- A table: the app replaces the big tense tables of English grammar books.
+       A solid gradient block with the grid cut out in white, so the cells read
+       as coloured tiles and the header row is slightly deepened.
+       The gradient runs cyan, blue-violet, pink, orange at full saturation. The
+       stops are kept bright on purpose: darker shades and a heavy header
+       overlay made the mark look dull, and lighter ones washed out into
+       pastels.
+       A header over two rows, with a narrow label column beside one wide
+       column: an even 3x3 grid reads as a calendar.
+       Grid lines are drawn as plain white strokes on purpose: a gradient stroke
+       on a perfectly straight line has an empty bounding box and paints
+       nothing. At 16px anything thinner than about 5 units blurs into the fill. -->
   <defs>
-    <linearGradient id="chevron" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#06b6d4" />
-      <stop offset="50%" stop-color="#7c3aed" />
-      <stop offset="100%" stop-color="#f43f5e" />
+    <linearGradient id="table" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="35%" stop-color="#6c63ff" />
+      <stop offset="70%" stop-color="#ff3d9a" />
+      <stop offset="100%" stop-color="#ffb020" />
     </linearGradient>
   </defs>
-  <!-- Heavy strokes filling most of the canvas: at a 16px browser tab anything
-       thinner washes out into antialiasing. Much past this and the notch
-       between the two arms closes up. -->
-  <g
-    fill="none"
-    stroke="url(#chevron)"
-    stroke-width="14"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-  >
-    <path d="M10 23 26 39 10 55" />
-    <path d="M36 9 52 25 36 41" />
+  <rect x="3" y="5" width="58" height="54" rx="10" fill="url(#table)" />
+  <path d="M3 22V15a10 10 0 0 1 10-10h38a10 10 0 0 1 10 10v7z" fill="#000" fill-opacity="0.1" />
+  <g stroke="#fff" stroke-width="5.5">
+    <path d="M3 22H61" />
+    <path d="M3 41H61" />
+    <path d="M21 22V59" />
   </g>
 </svg>
