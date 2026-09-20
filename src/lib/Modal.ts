@@ -4,14 +4,17 @@ import { BaseVerb } from "~/lib/BaseVerb";
 
 export class Modal extends BaseVerb {
   renderToWords(): Word[] {
-    const words = this.base.split("_").map((text) => ({
+    const words: Word[] = this.base.split("_").map((text) => ({
       text,
       role: WordRole.modal,
     }));
 
     if (this.negative) {
-      if (this.contract) {
-        words[0].text = contractNegative(this.base);
+      const contracted = this.contract ? negativeContractions[this.base] : undefined;
+
+      if (contracted) {
+        words[0].text = contracted;
+        words[0].form = "ctr";
       } else {
         const notAdverb = {
           text: "not",
@@ -30,18 +33,19 @@ export class Modal extends BaseVerb {
   }
 }
 
-function contractNegative(modal: string): string {
-  switch (modal) {
-    case "can":
-      return "can't";
-    case "will":
-      return "won't";
-    case "shall":
-      return "shan't";
-    default:
-      return modal + "n't";
-  }
-}
+// Only the modals with an everyday contracted negative. The rest keep "not" as
+// a separate word: "may not", "might not", "shall not", "ought not to", "had
+// better not". Appending "n't" to anything else produces forms an ESL learner
+// should never meet — the archaic "mayn't" and "shan't", or nonsense like
+// "ought_ton't" from the two-word modals.
+const negativeContractions: { [key: string]: string } = {
+  can: "can't",
+  could: "couldn't",
+  will: "won't",
+  would: "wouldn't",
+  should: "shouldn't",
+  must: "mustn't",
+};
 
 export enum ModalVerb {
   could = "could",

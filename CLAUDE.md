@@ -57,7 +57,7 @@ All word text is kept **lowercase** throughout the pipeline; only the first word
 - `Verb` holds `form` (`VerbForm`: base/present/past/ing/v3), `subject`, and `role` (`WordRole`, used for labelling and by the contraction logic). It looks up irregular spellings through the overridable `getSpellingInfo`.
 - `IrregularVerb` differs only by reading from `spelling/IrregularVerbList.ts` instead of `spelling/VerbList.ts`.
 - `BeVerb` overrides `getVerbForm` entirely (am/is/are/was/were), since `be` is not in either list.
-- `Modal` takes a `ModalVerb` enum value as its base. Multi-word modals use underscores (`ought_to`, `had_better`) and are split into separate `Word`s on render. It builds its own negation: `contractNegative` handles `can't`/`won't`/`shan't` and otherwise appends `n't`; the uncontracted `not` goes after the first word, except after `had better`.
+- `Modal` takes a `ModalVerb` enum value as its base. Multi-word modals use underscores (`ought_to`, `had_better`) and are split into separate `Word`s on render. It builds its own negation from the `negativeContractions` allow-list — `can't`, `couldn't`, `won't`, `wouldn't`, `shouldn't`, `mustn't`. Every other modal keeps `not` as a separate word (`may not`, `shall not`, `ought not to`, `had better not`), which is placed after the first word except for `had better`, where it goes last. **Do not fall back to appending `n't`**: that is what produced the archaic `mayn't`/`shan't` and the nonsense `ought_ton't`.
 
 `Pronoun` is constructed by key into `pronounList` (`src/lib/Pronoun.ts`): `I`, `we`, `you`, `he`, `she`, `it`, `they`. `you` is typed as plural; a `you_singular` entry exists but is commented out. Each entry has person, number, optional gender and a `spelling` per `GrammarCase`; only `subject` is used so far. Verb agreement goes through `isThirdSingular()` / `isSingular()` / `isPlural()`.
 
@@ -67,6 +67,7 @@ All word text is kept **lowercase** throughout the pipeline; only the first word
 
 ## Known state
 
+The audience is ESL learners, so the output must stay within everyday modern English: no archaic forms (`amn't`, `mayn't`, `shan't`), and no form a learner would be marked wrong for using. Where English has a gap or an awkward form, the app should produce what a teacher would actually teach.
+
 - `yarn run check` reports 5 `Object is possibly 'undefined'` errors (`Verb.ts:41`, `BeVerb.ts:17,20,21,29`), all from `this.subject` being optional in `Verb`. They don't affect `yarn dev`/`yarn build`.
-- `Modal` negative contraction is wrong for `ought_to` (`ought_ton't to`) and `had_better`; `may` gives the archaic `mayn't`.
 - The `should not` → `shouldn't` contraction rule is dead: negative modals are already rendered as `shouldn't` before contractions run.
