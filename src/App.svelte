@@ -30,7 +30,9 @@
 
   let saved: SentenceSpec[] = $state([]);
 
-  const modalEnabled = $derived(spec.mode === SentenceMode.ModalVerb);
+  // the modal verb mode is drawn separately, with its select beside the radio
+  const tenseOptions = modeOptions.filter((option) => option.key !== SentenceMode.ModalVerb);
+  const modalEnabled =$derived(spec.mode === SentenceMode.ModalVerb);
   const objects = $derived(objectsFor(spec.verbKey, spec.passive));
   const objectNeeded = $derived(objectRequired(spec.verbKey, spec.passive));
 
@@ -63,7 +65,8 @@
   const select =
     "min-w-[130px] rounded-[5px] border border-[#767676] bg-white p-[5px] text-base text-black disabled:border-[#767676]/30 disabled:bg-[#efefef]/50 disabled:text-[#808080]";
   const chip = "flex items-center gap-1 rounded-[5px] px-2 py-0.5 whitespace-nowrap";
-  // the browser gives a checkbox a small margin, which preflight removes
+  // the browser gives a checkbox (or radio button) a small margin, which
+  // preflight removes
   const checkbox = "m-[3px_3px_3px_4px]";
   // 17px and 7px, a pixel more than the 16px and 6px of padding, is the room a
   // native button reserves for its border
@@ -128,30 +131,8 @@
     </div>
 
     <div class="mb-3 flex flex-wrap items-end gap-4">
-      <!-- Mode picks no part of speech, so it has no colour; it keeps the same
-           padding as the coloured fields so the row stays aligned. -->
-      <label class={field}>
-        <span class="text-[13px] text-[#888]">Mode</span>
-        <select class={select} bind:value={spec.mode}>
-          {#each modeOptions as option (option.key)}
-            <option value={option.key}>{option.label}</option>
-          {/each}
-        </select>
-      </label>
-
-      <label class={[field, "bg-role-modal", { "opacity-45": !modalEnabled }]}>
-        <span class={fieldLabel}>Modal verb</span>
-        <select class={select} bind:value={spec.modalVerb} disabled={!modalEnabled}>
-          {#each modalOptions as option (option.key)}
-            <option value={option.key}>{option.label}</option>
-          {/each}
-        </select>
-      </label>
-    </div>
-
-    <div class="mb-3 flex flex-wrap items-end gap-4">
       <fieldset class="flex flex-wrap gap-3 rounded-[5px] border border-[#ddd] px-3 pt-2 pb-2.5">
-        <legend class="px-1 text-[13px] text-[#888]">Aspect and voice</legend>
+        <legend class="px-1 text-[13px] text-[#888]">Verb aspect and voice</legend>
         <label class={chip}><input class={checkbox} type="checkbox" bind:checked={spec.perfect} /> perfect</label>
         <label class={chip}><input class={checkbox} type="checkbox" bind:checked={spec.continuous} /> continuous</label>
         <label class={[chip, "bg-role-passive"]}
@@ -159,8 +140,45 @@
         >
       </fieldset>
 
+      <!-- Tense picks no part of speech, so it has no colour. -->
       <fieldset class="flex flex-wrap gap-3 rounded-[5px] border border-[#ddd] px-3 pt-2 pb-2.5">
-        <legend class="px-1 text-[13px] text-[#888]">Sentence type</legend>
+        <legend class="px-1 text-[13px] text-[#888]">Tense or modal</legend>
+        {#each tenseOptions as option (option.key)}
+          <label class={chip}>
+            <input class={checkbox} type="radio" name="mode" value={option.key} bind:group={spec.mode} />
+            {option.label}
+          </label>
+        {/each}
+        <!-- The modal verb belongs to the "modal verb" mode, so its field sits
+             in the same group. The radio's label and the select are siblings:
+             a label wrapping two controls would only ever govern the first. -->
+        <!-- Not `chip`: its 2px of vertical padding leaves too thin a band of
+             colour around the select, and a second py-* would fight it. -->
+        <span
+          class={[
+            "flex items-center gap-1 rounded-[5px] px-2 py-1.25 whitespace-nowrap",
+            modalEnabled ? "bg-role-modal" : "bg-role-modal/45",
+          ]}
+        >
+          <label class="flex items-center gap-1">
+            <input class={checkbox} type="radio" name="mode" value={SentenceMode.ModalVerb} bind:group={spec.mode} />
+            modal verb:
+          </label>
+          <select
+            class={select}
+            aria-label="Modal verb"
+            bind:value={spec.modalVerb}
+            disabled={!modalEnabled}
+          >
+            {#each modalOptions as option (option.key)}
+              <option value={option.key}>{option.label}</option>
+            {/each}
+          </select>
+        </span>
+      </fieldset>
+
+      <fieldset class="flex flex-wrap gap-3 rounded-[5px] border border-[#ddd] px-3 pt-2 pb-2.5">
+        <legend class="px-1 text-[13px] text-[#888]">Sentence mode</legend>
         <label class={[chip, "bg-role-negation"]}
           ><input class={checkbox} type="checkbox" bind:checked={spec.negative} /> negative</label
         >
