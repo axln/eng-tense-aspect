@@ -77,7 +77,7 @@
 
 <main class="mx-auto max-w-[932px] px-4 pt-5 pb-15">
   <h1 class="my-[0.67em] flex items-center gap-2.5 text-[28px] font-semibold tracking-[-0.01em] text-brand">
-    <img class="flex-none" src="/favicon.svg" alt="" width="36" height="36" />
+    <img class="flex-none" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="36" height="36" />
     Sentence Constructor
   </h1>
 
