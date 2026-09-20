@@ -183,4 +183,6 @@
       {/each}
     </div>
   {/if}
+
+  <p class="mt-10 text-center text-[12px] text-[#999]">v{__APP_VERSION__}</p>
 </main>
