@@ -1,0 +1,5 @@
+{
+  // Values like min-h-[47px] are used on purpose, so the extension's hint to
+  // rewrite them as min-h-11.75 is switched off.
+  "tailwindCSS.lint.suggestCanonicalClasses": "ignore"
+}
