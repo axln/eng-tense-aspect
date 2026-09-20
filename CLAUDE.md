@@ -63,6 +63,17 @@ Tailwind comes in through `@tailwindcss/vite` (before the Svelte plugin in `vite
 - **Arbitrary values such as `min-h-[47px]` and `text-[26px]` are intentional.** Tailwind IntelliSense hints that some can be written on its scale (`min-h-11.75`); that hint is turned off in `.vscode/settings.json` (`tailwindCSS.lint.suggestCanonicalClasses`). Do not "fix" them: the pixel values are the design, and the scale form hides them.
 - `data-sentence` marks the root of each rendered sentence, a stable hook for tests and scripts that should not depend on class names.
 
+### The verb phrase frame
+
+English treats a chain like `have been going` as one verb: only its first word takes the tense and the agreement. `Sentence.svelte` draws that chain inside a frame titled **verb phrase**, and `groupVerbPhrase` in `src/lib/VerbPhrase.ts` decides what goes in it (the drawing is in the component; the rule is there so it can be tested). The rules:
+
+- A phrase needs **at least two verbs of the chain** (modal, auxiliaries, passive, main verb). `He goes.` and `He is hungry.` have one verb, so no frame. A `not` on its own is not a second verb, so `He is not hungry.` has none either; but once there is a phrase, the negation sits **inside** it (`has not been going`, or fused as `hasn't`).
+- The subject, the object and the end mark are never in it.
+- **In a question the subject moves into the chain** (`Have YOU been going?`), so the phrase is split; each run gets its own frame with the same title. That is deliberate: it shows one unit interrupted by the subject.
+- A contracted word that holds part of the phrase is framed whole: `I'm` in `I'm asked` is one word on the page, and its stripes still show that the `I` is the subject.
+
+The title is "verb phrase" (constant `verbPhraseTitle`), not "compound verb": in most grammars a compound verb is a verb built from two words, like `sleepwalk`, so the name would clash with what learners read elsewhere. "Verb group" is also standard. A frame adds 7px below its tiles (6px padding, 1px border), so unframed tiles get `mb-[7px]` **only when the sentence has a frame**, keeping every tile on one baseline; they sit in a `flex` wrapper because an `inline-flex` tile in a plain block picks up 4px of line-box height.
+
 ### Contracted words
 
 A contracted word is several words written as one, so a `Word` made by a contraction carries `parts` (`{ text, role }[]`, defined in `src/type.ts`): `I'm` in `I'm asked` is the subject `I` + the passive auxiliary `'m`, and `hasn't` is the auxiliary `has` + the negation `n't`. Each part keeps the role it had before the words merged. `Word.svelte` draws the word as **one unbroken piece of text** on horizontal stripes: one equal stripe per part in reading order, each labelled with its role, plus a lavender `ctr` stripe for the contraction itself — so `I'm asked` shows pink, turquoise and lavender. Do not draw the parts as separate side-by-side cells: `She's` then reads as `She 's`, which is exactly the confusion a learner should not get. The invariants, all checked in `Parts.test.ts` across every combination:
@@ -103,6 +114,7 @@ Tests live beside the code as `src/lib/*.test.ts`, and `src/lib/testHelper.ts` e
 
 - `Contractions.test.ts` — what contracts and what must not, plus a sweep of tens of thousands of combinations for forms English forbids (`amn't`, `shan't`, a stranded `he's.`, a contracted main-verb `have`).
 - `Grammar.test.ts` — do-support, agreement, the three aspects, question inversion, object placement.
+- `VerbPhrase.test.ts` — what is framed as the verb phrase, including questions, contractions and a lone `not`, plus a sweep of every combination.
 - `Verb.test.ts` — known irregular spellings, plus rule checks over **every** verb in the lists. The spelling tables only hold exceptions, so a verb that needs one and lacks it fails silently (`catchs`, `giveing`); adding a verb to the lists is covered by those checks.
 
 A bug found in the English output should get a test that fails first, then the fix.
