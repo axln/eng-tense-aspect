@@ -1,5 +1,5 @@
 <svelte:head>
-  <title>eng-tense-aspect</title>
+  <title>English verb tense and aspect generator</title>
 </svelte:head>
 
-eng-tense-aspect
+<h1>English verb tense and aspect generator</h1>
