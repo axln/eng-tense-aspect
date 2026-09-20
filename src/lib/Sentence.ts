@@ -72,6 +72,7 @@ export function buildSentence({
   if (negative) {
     verbChain[0].negative = true;
     verbChain[0].contract = contract;
+    verbChain[0].interrogative = interrogative;
   }
 
   let words = verbChain.reduce((arr, verb) => {

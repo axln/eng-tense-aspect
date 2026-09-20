@@ -1,5 +1,28 @@
 import type { Word } from "~/type";
+import { WordRole } from "~/type";
 import type { ContractionRule } from "~/spelling/Contractions";
+
+// No other English verb is spelled any of these, so a word carrying the verb
+// role and one of these spellings is the copula "be".
+const beForms = new Set(["am", "is", "are", "was", "were"]);
+
+// English blocks a subject+verb contraction in two cases:
+//
+// 1. the verb is stranded at the end of the clause, with the rest elided:
+//    "Yes, he is." never "Yes, he's.", "taller than I am." never "than I'm.";
+// 2. the verb is a semantic verb rather than an auxiliary: "I have a car",
+//    not "I've a car".
+//
+// The copula is the exception to the second case. It carries the verb role
+// here because it is the only verb in the chain, but "He's hungry." is the
+// ordinary way to say it, so it contracts like an auxiliary.
+function contractible(secondWord: Word, clauseFinal: boolean): boolean {
+  if (clauseFinal) {
+    return false;
+  }
+
+  return secondWord.role !== WordRole.verb || beForms.has(secondWord.text);
+}
 
 export function applyContraction(
   words: Word[],
@@ -12,9 +35,13 @@ export function applyContraction(
       const firstWord = words[i];
       const secondWord = words[i + 1];
 
+      // the end punctuation has not been appended yet, so the last word of
+      // the array is the last word of the clause
+      const clauseFinal = i + 1 === words.length - 1;
+
       if (
         `${firstWord.text} ${secondWord.text}` === contraction.from &&
-        secondWord.role !== "verb" // we don't contract semantic verbs
+        contractible(secondWord, clauseFinal)
       ) {
         newWords.push({
           text: contraction.to,

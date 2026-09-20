@@ -40,7 +40,11 @@ The three aspect checkboxes (perfect, continuous, passive) map straight onto `ve
 2. **Finite verb** — for `ModalVerb` mode the `Modal` is prepended. Otherwise `do` is prepended if the sentence is negative/interrogative and the first verb isn't `be`/`have` (do-support), and `makePersonal(subject, isPresent)` sets the head verb to present or past agreeing with the subject.
 3. **Negation** — flags `negative`/`contract` are set on the *first* verb in the chain only; the verb's `renderToWords` emits either `not` or an `n't` suffix.
 4. **Render, subject and object placement** — each verb renders to `Word[]`; the subject goes first, or after the first word for interrogative inversion; the optional `object` string is appended after the whole verb chain as a single `WordRole.object` word (a phrase like `a new phone` is one tile, not split).
-5. **Contractions** — `applyContractions` (`src/lib/Helper.ts`) rewrites adjacent word pairs from the rule table in `src/spelling/Contractions.ts` (only when `contract`), and `can not` → `cannot` always applies. Contractions are skipped when the second word has `role === "verb"`, so semantic verbs are never contracted. Finally, the end punctuation is appended and the first word capitalised.
+5. **Contractions** — `applyContractions` (`src/lib/Helper.ts`) rewrites adjacent word pairs from the rule table in `src/spelling/Contractions.ts` (only when `contract`), and `can not` → `cannot` always applies. Finally, the end punctuation is appended and the first word capitalised.
+
+`contractible` in `Helper.ts` encodes where English blocks a subject+verb contraction: when the verb is **stranded** at the end of the clause with the rest elided (`Yes, he is.`, never `Yes, he's.`), and when it is a **semantic verb** rather than an auxiliary (`I have a car`, not `I've a car`). The copula is the exception to the second rule — it carries `WordRole.verb` because it is the only verb in the chain, but `He's hungry.` is ordinary English, so `beForms` lets it contract. Stranding is detected by position: the end punctuation has not been appended yet, so the last element of the array is the last word of the clause.
+
+`am not` is the gap in the negation paradigm — there is no standard `amn't` — and it is the only negation whose form depends on the sentence type, so `BeVerb` overrides `renderToWords`: a question takes suppletive `aren't I`, a statement emits an uncontracted `am` + `not` and lets the subject contract instead, giving `I'm not`. `BaseVerb.interrogative` exists solely to carry that distinction down from `buildSentence`.
 
 ### Text convention
 
@@ -64,6 +68,5 @@ All word text is kept **lowercase** throughout the pipeline; only the first word
 ## Known state
 
 - `yarn run check` reports 5 `Object is possibly 'undefined'` errors (`Verb.ts:41`, `BeVerb.ts:17,20,21,29`), all from `this.subject` being optional in `Verb`. They don't affect `yarn dev`/`yarn build`.
-- `BeVerb` + `I` + negative + contract renders `amn't` (should be `I'm not`, or `aren't I` in questions). This can't be fixed in the contraction table, which only merges two words into one.
 - `Modal` negative contraction is wrong for `ought_to` (`ought_ton't to`) and `had_better`; `may` gives the archaic `mayn't`.
 - The `should not` → `shouldn't` contraction rule is dead: negative modals are already rendered as `shouldn't` before contractions run.
