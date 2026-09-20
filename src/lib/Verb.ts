@@ -22,6 +22,17 @@ export class Verb extends BaseVerb {
     this.form = present ? VerbForm.present : VerbForm.past;
   }
 
+  // A present or past form agrees with the subject, and makePersonal sets the
+  // two together. `form` is public, though, so a caller can set it alone; say
+  // so plainly rather than crash on "undefined".
+  protected requireSubject(): Pronoun {
+    if (!this.subject) {
+      throw new Error("Subject must be set for present and past verb forms.");
+    }
+
+    return this.subject;
+  }
+
   getVerbForm(): string {
     const verbInfo = this.getSpellingInfo(this.base);
 
@@ -39,7 +50,7 @@ export class Verb extends BaseVerb {
         return verbInfo.v3 || verbInfo.ed || `${this.base}ed`;
 
       case VerbForm.present:
-        if (this.subject.isThirdSingular()) {
+        if (this.requireSubject().isThirdSingular()) {
           return verbInfo.thirdSingular || `${this.base}s`;
         } else {
           return this.base;
@@ -48,11 +59,8 @@ export class Verb extends BaseVerb {
   }
 
   renderToWords(): Word[] {
-    if (
-      (this.form === VerbForm.present || this.form === VerbForm.past) &&
-      !this.subject
-    ) {
-      throw new Error("Subject must be set for present and past verb forms.");
+    if (this.form === VerbForm.present || this.form === VerbForm.past) {
+      this.requireSubject();
     }
 
     const words: Word[] = [

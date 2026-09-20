@@ -121,3 +121,39 @@ describe("every verb follows the spelling rules", () => {
     expect(bad.map(({ key }) => key)).toEqual([]);
   });
 });
+
+// A present or past form agrees with the subject, and makePersonal sets the
+// subject together with the form. Setting the form alone is a mistake by the
+// caller, and it should be reported as one, not as "undefined is not an object".
+describe("a personal form needs a subject", () => {
+  it.each(["ask:r", "go:i", "be:s"])("%s: the present says so plainly", (key) => {
+    const verb = createVerb(key);
+    verb.form = VerbForm.present;
+
+    expect(() => verb.getVerbForm()).toThrow("Subject must be set for present and past verb forms.");
+  });
+
+  it("be: the past says so plainly", () => {
+    const verb = createVerb("be:s");
+    verb.form = VerbForm.past;
+
+    expect(() => verb.getVerbForm()).toThrow("Subject must be set for present and past verb forms.");
+  });
+
+  it.each([VerbForm.present, VerbForm.past])("rendering a %s form says so too", (form) => {
+    const verb = createVerb("go:i");
+    verb.form = form;
+
+    expect(() => verb.renderToWords()).toThrow("Subject must be set for present and past verb forms.");
+  });
+
+  it("with a subject set, nothing throws", () => {
+    for (const form of [VerbForm.present, VerbForm.past]) {
+      const verb = createVerb("be:s");
+      verb.subject = new Pronoun("he");
+      verb.form = form;
+
+      expect(verb.getVerbForm()).toBe(form === VerbForm.present ? "is" : "was");
+    }
+  });
+});

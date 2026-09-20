@@ -44,24 +44,23 @@ export class BeVerb extends Verb {
       case VerbForm.v3:
         return "been";
 
-      case VerbForm.present:
-        if (this.subject.isThirdSingular()) {
+      case VerbForm.present: {
+        const subject = this.requireSubject();
+
+        if (subject.isThirdSingular()) {
           return "is";
         } else if (
-          this.subject.isPlural() ||
-          this.subject.info.grammarPerson === GrammarPerson.second
+          subject.isPlural() ||
+          subject.info.grammarPerson === GrammarPerson.second
         ) {
           return "are";
         } else {
           return "am";
         }
+      }
 
       case VerbForm.past:
-        if (this.subject.isSingular()) {
-          return "was";
-        } else {
-          return "were";
-        }
+        return this.requireSubject().isSingular() ? "was" : "were";
     }
   }
 }
