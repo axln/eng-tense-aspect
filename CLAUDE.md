@@ -8,15 +8,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **The deploy workflow pushes to `main` too** (see *Deployment*): after every deploy it commits a version bump, so the remote is usually one commit ahead of the local branch. Run `git pull --rebase` before pushing, or the push is rejected.
 
+Conventions used so far: split the work into logical commits (docs in their own), each one building and passing on its own, which is checked in a throwaway `git worktree` before pushing; a short imperative subject and a body that says *why*; the `Co-Authored-By` trailer given in the session's attribution reminder.
+
+## Working with the user
+
+- **Stay inside this project.** Read files outside it only when the user names the path. Two sibling projects have come up as references: `~/project/voice-mirror` (its `deploy.yml` and version-bump script were the model for this deploy) and `~/project/_archive/eng-learn` (the earlier React version, where the verb objects came from). Do not browse `~/project/` or `_archive/` on your own.
+- **The user asks whether English grammar is right** ("I hope I'm right regarding English grammar"). Answer honestly and say when their term or rule is off; they have welcomed it (*compound verb* became *verb phrase*, and "no contractions with linking *be*" was corrected). Grammar claims should be checked, not assumed.
+- **Things they decided and do not want revisited:** stripes, not side-by-side cells, for contractions; two frames in questions; no archaic forms; arbitrary Tailwind values stay as they are; the all-three-aspects combination stays allowed.
+
 ## Project
 
-A Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). Tests use vitest; there is no linter configured.
+**Sentence Constructor**: a Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app, live at https://axln.github.io/eng-tense-aspect/ (repository `axln/eng-tense-aspect`, public). It replaces the big English tense tables: the user picks a subject, verb, object and aspect, and it generates the sentence for every tense/aspect/voice/negation/question combination, drawing each word as a tile labelled and coloured by its grammatical role. The audience is ESL learners and their teachers. It is a static site with no backend. Yarn Classic is the package manager (`yarn.lock`); tests use vitest; there is no ESLint or Prettier and no license file.
+
+`README.md` is for GitHub visitors, with a screenshot in `docs/screenshot.png` (taken at v0.1.3). Keep the facts in it checkable (it states 7 pronouns, 114 verbs, 11 modals) and retake the screenshot if the UI changes noticeably.
 
 ## Commands
 
-- `yarn dev` — Vite dev server
+- `yarn dev` — Vite dev server at http://localhost:5173/eng-tense-aspect/ (note the sub-path)
 - `yarn build` / `yarn preview` — production build / serve it
 - `yarn run check` — `svelte-check --tsconfig ./tsconfig.app.json` then `tsc -p tsconfig.node.json`
+- `yarn bump-version` — **CI only; do not run it locally.** It edits `package.json`, and the deploy workflow does it once per deploy.
 - `yarn test` — run all tests once (`yarn test:watch` to keep them running). One file: `yarn vitest run src/lib/Grammar.test.ts`; one test by name: `yarn vitest run -t "shall not"`
 
 Always run type checks through `yarn run check` (or pass `--tsconfig ./tsconfig.app.json`). A bare `npx svelte-check` picks up the root `tsconfig.json`, which has `files: []`, so it checks nothing and reports 0 errors.
@@ -121,18 +132,42 @@ All word text is kept **lowercase** throughout the pipeline; only the first word
 
 ## Tests
 
-Tests live beside the code as `src/lib/*.test.ts`, and `src/lib/testHelper.ts` exports `say(options)`, which builds a sentence as plain text with every option defaulted (`say({ subject: "I", verb: "have:i", object: "a car", contract: true })` → `"I have a car."`). Use it rather than constructing `SentenceParams` by hand.
+Tests live beside the code as `src/lib/*.test.ts` (plus `src/version.test.ts`), and `src/lib/testHelper.ts` exports `say(options)`, which builds a sentence as plain text with every option defaulted (`say({ subject: "I", verb: "have:i", object: "a car", contract: true })` → `"I have a car."`), and `words(options)`, which returns the `Word[]` instead. Use them rather than constructing `SentenceParams` by hand.
 
 - `Contractions.test.ts` — what contracts and what must not, plus a sweep of tens of thousands of combinations for forms English forbids (`amn't`, `shan't`, a stranded `he's.`, a contracted main-verb `have`).
 - `Grammar.test.ts` — do-support, agreement, the three aspects, question inversion, object placement.
+- `Parts.test.ts` — the roles inside a contracted word, and the invariants of `parts` across every combination.
 - `VerbPhrase.test.ts` — what is framed as the verb phrase, including questions, contractions and a lone `not`, plus a sweep of every combination.
 - `Verb.test.ts` — known irregular spellings, plus rule checks over **every** verb in the lists. The spelling tables only hold exceptions, so a verb that needs one and lacks it fails silently (`catchs`, `giveing`); adding a verb to the lists is covered by those checks.
 
-A bug found in the English output should get a test that fails first, then the fix.
+- `version.test.ts` — the version is three plain numbers and `__APP_VERSION__` matches `package.json`.
+
+A bug found in the English output should get a test that fails first, then the fix. To be sure a new test can fail, break the code it covers on purpose and watch it fail, then restore.
+
+## Verifying changes
+
+Run `yarn run check`, `yarn test` and `yarn build` (the deploy runs the same). For anything visible, look at it in a real browser; type checks do not show a layout that is 4px off.
+
+- **The browser.** There is no Chrome extension or `chromium-cli` here. Use headless Google Chrome (`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome --headless=new --remote-debugging-port=9222 --window-size=1100,900 --user-data-dir=<scratch dir> about:blank`) and drive it through the DevTools Protocol from a small Node script (Node 24 has a built-in `WebSocket`, so no dependencies). Set a `<select>` by assigning `.value` and dispatching a bubbling `change` event; tick checkboxes with real `Input.dispatchMouseEvent` presses; screenshot with `Page.captureScreenshot` and open the PNG with the Read tool. Keep such scripts in the scratchpad, not the repo.
+- **Refactors must not change the output.** Serve the previous commit from a `git worktree` (symlink `node_modules` into it) on another port and compare: measured layout (boxes, sizes, computed styles) with the same script against both, and a hash of every generated sentence (loop over all verbs, pronouns, modes, modals and flags via `ssrLoadModule`; ~1.7 million sentences, seconds). The Tailwind migration and the `requireSubject` fix were verified this way.
+- **The deploy pipeline without GitHub.** Copy `git ls-files -co --exclude-standard` into a scratch directory, run the workflow's steps there, and use a local bare repository as the remote to test the commit-back step. The repository is public, so the GitHub API works with plain `curl` (`gh` is not installed): watch a run at `https://api.github.com/repos/axln/eng-tense-aspect/actions/runs`, and check the live bundle for the version string.
+- **Traps.** This shell is zsh, which does not word-split an unquoted `$var`: `set -- $pair` and `for x in $list` misbehave, so pass arguments explicitly. Wait for Vite to reload after an edit before probing the page, or the probe runs mid-reload and returns nothing. Restart the dev server after changing `vite.config.ts` or the dependencies. Minified output uses template literals, so `grep` for a value without assuming its quotes. Do not leave a dev server or Chrome running: `lsof -ti:PORT -sTCP:LISTEN | xargs -r kill`.
 
 ## Known state
 
 The audience is ESL learners, so the output must stay within everyday modern English: no archaic forms (`amn't`, `mayn't`, `shan't`), and no form a learner would be marked wrong for using. Where English has a gap or an awkward form, the app should produce what a teacher would actually teach.
 
 - `yarn run check` is clean and must stay so: the deploy runs it. A present or past verb form needs a subject, and `Verb.requireSubject()` is the one place that says so (with a clear error) instead of dereferencing the optional `this.subject`; use it rather than a `!` assertion.
-- The `should not` → `shouldn't` contraction rule is dead: negative modals are already rendered as `shouldn't` before contractions run.
+- The `should not` → `shouldn't` contraction rule in `Contractions.ts` is dead: negative modals are already rendered as `shouldn't` before contractions run. Deleting it is safe.
+
+### Raised, not decided
+
+Things that came up and were left open; ask before changing any of them.
+
+- `get` uses `got` as its past participle (British); American English says `gotten`.
+- Questions with `had better` and `ought to` come out formal (`Had I better go?`, `Ought I to go?`), as does `May I not go?`.
+- `shall` is still a modal: `Shall we go?` is standard ESL material, but `I shall go` is dated.
+- The perfect and continuous checkboxes have no colour; they produce the light-blue auxiliary tiles and could take that colour, as passive, negative and contractions do. The Mode control is uncoloured on purpose: it picks a tense, not a part of speech.
+- `you` is typed as plural; a `you_singular` entry exists in `Pronoun.ts` but is commented out.
+- A contracted word that holds part of the verb phrase is framed whole (`I'm` in `I'm asked`, with its subject stripe inside the frame). Revisit if learners find it confusing.
+- The version sits inside the `h1`, so a screen reader announces "Sentence Constructor v0.1.3"; `aria-hidden` on it would avoid that.
