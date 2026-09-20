@@ -74,7 +74,7 @@
 
   <div class="controls">
     <div class="row">
-      <label class="field">
+      <label class="field subject">
         <span class="label">Subject</span>
         <select bind:value={spec.pronounKey}>
           {#each pronounOptions as option (option.key)}
@@ -83,7 +83,7 @@
         </select>
       </label>
 
-      <label class="field">
+      <label class="field verb">
         <span class="label">Verb</span>
         <select bind:value={spec.verbKey}>
           {#each verbOptions as option (option.key)}
@@ -92,7 +92,7 @@
         </select>
       </label>
 
-      <label class="field" class:disabled={objects.length === 0}>
+      <label class="field object" class:disabled={objects.length === 0}>
         <span class="label">Object</span>
         <select bind:value={spec.objectIndex} disabled={objects.length === 0}>
           {#if !objectNeeded}
@@ -118,7 +118,7 @@
         </select>
       </label>
 
-      <label class="field" class:disabled={!modalEnabled}>
+      <label class="field modal" class:disabled={!modalEnabled}>
         <span class="label">Modal verb</span>
         <select bind:value={spec.modalVerb} disabled={!modalEnabled}>
           {#each modalOptions as option (option.key)}
@@ -133,14 +133,14 @@
         <legend>Aspect and voice</legend>
         <label><input type="checkbox" bind:checked={spec.perfect} /> perfect</label>
         <label><input type="checkbox" bind:checked={spec.continuous} /> continuous</label>
-        <label><input type="checkbox" bind:checked={spec.passive} /> passive</label>
+        <label class="passive"><input type="checkbox" bind:checked={spec.passive} /> passive</label>
       </fieldset>
 
       <fieldset>
         <legend>Sentence type</legend>
-        <label><input type="checkbox" bind:checked={spec.negative} /> negative</label>
+        <label class="negative"><input type="checkbox" bind:checked={spec.negative} /> negative</label>
         <label><input type="checkbox" bind:checked={spec.interrogative} /> interrogative</label>
-        <label><input type="checkbox" bind:checked={spec.contract} /> contractions</label>
+        <label class="contraction"><input type="checkbox" bind:checked={spec.contract} /> contractions</label>
       </fieldset>
     </div>
   </div>
@@ -195,10 +195,30 @@
     align-items: flex-end;
   }
 
+  /* Every field has the same padding, coloured or not, so the controls stay
+     aligned; only the ones that pick a part of the sentence get a background. */
   .field {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    padding: 6px 10px 9px;
+    border-radius: 5px;
+  }
+
+  .field.subject {
+    background-color: var(--role-subject);
+  }
+
+  .field.verb {
+    background-color: var(--role-verb);
+  }
+
+  .field.object {
+    background-color: var(--role-object);
+  }
+
+  .field.modal {
+    background-color: var(--role-modal);
   }
 
   .field.disabled {
@@ -208,6 +228,11 @@
   .label {
     font-size: 13px;
     color: #888;
+  }
+
+  /* the pale grey label is too faint on a coloured background */
+  .field:is(.subject, .verb, .object, .modal) .label {
+    color: #555;
   }
 
   select {
@@ -232,11 +257,27 @@
     padding: 0 4px;
   }
 
+  /* Every option has the same padding, coloured or not, so they stay aligned;
+     only the ones that show up in the sentence get a background. */
   fieldset label {
     display: flex;
     align-items: center;
     gap: 4px;
     white-space: nowrap;
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  fieldset label.passive {
+    background-color: var(--role-passive);
+  }
+
+  fieldset label.negative {
+    background-color: var(--role-negation);
+  }
+
+  fieldset label.contraction {
+    background-color: var(--role-contraction);
   }
 
   .buttons {

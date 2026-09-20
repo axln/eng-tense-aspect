@@ -11,6 +11,21 @@
   font-size: 16px;
   color: #444;
 
+  /* One colour per part of the sentence. The word tiles use them, and so do
+     the controls that pick that part, so a control and the tile it produces
+     visibly belong together. */
+  --role-subject: lightpink;
+  --role-verb: lightgreen;
+  --role-aux: lightskyblue;
+  --role-passive: mediumturquoise;
+  --role-modal: coral;
+  --role-negation: lightgray;
+  --role-object: cornsilk;
+  --role-end: beige;
+
+  /* Not a part of speech but a property of a word: a contracted word keeps its
+     role colour and gets a stripe in this one. */
+  --role-contraction: #bfa8ff;
 }
 
 /* Form controls do not inherit the page font by default and would keep the

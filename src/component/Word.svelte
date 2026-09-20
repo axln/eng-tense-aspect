@@ -4,7 +4,7 @@
   let { word }: { word: Word } = $props();
 </script>
 
-<div class="word {word.role}">
+<div class="word {word.role}" class:contracted={word.form === "ctr"}>
   <div class="meta">
     <span class="role">{word.role}</span>
     {#if word.form}
@@ -44,36 +44,41 @@
     font-size: 26px;
   }
 
+  /* an inset stripe rather than a border, so the tile keeps its size */
+  .word.contracted {
+    box-shadow: inset 0 -5px 0 var(--role-contraction);
+  }
+
   .word.subject {
-    background-color: lightpink;
+    background-color: var(--role-subject);
   }
 
   .word.verb {
-    background-color: lightgreen;
+    background-color: var(--role-verb);
   }
 
   .word.aux {
-    background-color: lightskyblue;
+    background-color: var(--role-aux);
   }
 
   .word.passive {
-    background-color: mediumturquoise;
+    background-color: var(--role-passive);
   }
 
   .word.modal {
-    background-color: coral;
+    background-color: var(--role-modal);
   }
 
   .word.negation {
-    background-color: lightgray;
+    background-color: var(--role-negation);
   }
 
   .word.object {
-    background-color: cornsilk;
+    background-color: var(--role-object);
   }
 
   .word.end {
     min-width: 30px;
-    background-color: beige;
+    background-color: var(--role-end);
   }
 </style>
