@@ -54,47 +54,62 @@
   function reset(): void {
     saved = [];
   }
+
+  // Preflight strips the browser's own look from selects and buttons, so they
+  // are styled here. Tailwind reads class names from the source as written, so
+  // these are spelled out in full rather than assembled from parts.
+  const field = "flex flex-col gap-0.75 rounded-[5px] px-2.5 pt-1.5 pb-2.25";
+  const fieldLabel = "text-[13px] text-[#555]"; // darker than the plain label: the grey is faint on a colour
+  const select =
+    "min-w-[130px] rounded-[5px] border border-[#767676] bg-white p-[5px] text-base text-black disabled:border-[#767676]/30 disabled:bg-[#efefef]/50 disabled:text-[#808080]";
+  const chip = "flex items-center gap-1 rounded-[5px] px-2 py-0.5 whitespace-nowrap";
+  // the browser gives a checkbox a small margin, which preflight removes
+  const checkbox = "m-[3px_3px_3px_4px]";
+  // 17px and 7px, a pixel more than the 16px and 6px of padding, is the room a
+  // native button reserves for its border
+  const button =
+    "rounded-md border border-[#767676] bg-[#efefef] px-[17px] py-[7px] text-base leading-[normal] text-black hover:bg-[#e3e3e3] disabled:border-[#767676]/30 disabled:bg-[#efefef] disabled:text-[#101010]/30";
 </script>
 
 <svelte:head>
   <title>English verb tense and aspect generator</title>
 </svelte:head>
 
-<main>
-  <h1>
-    <img class="logo" src="/favicon.svg" alt="" width="36" height="36" />
+<main class="mx-auto max-w-[932px] px-4 pt-5 pb-15">
+  <h1 class="my-[0.67em] flex items-center gap-2.5 text-[28px] font-semibold tracking-[-0.01em] text-brand">
+    <img class="flex-none" src="/favicon.svg" alt="" width="36" height="36" />
     Sentence Constructor
   </h1>
 
-  <p class="desc">
+  <p class="my-4 max-w-[640px] text-[#666]">
     Pick a subject, a verb and an aspect to see how the verb chain is built. The three aspect
     boxes combine freely; with none of them ticked the sentence is in the simple (indefinite)
     aspect.
   </p>
 
-  <div class="controls">
-    <div class="row">
-      <label class="field subject">
-        <span class="label">Subject</span>
-        <select bind:value={spec.pronounKey}>
+  <div class="mb-6">
+    <div class="mb-3 flex flex-wrap items-end gap-4">
+      <label class={[field, "bg-role-subject"]}>
+        <span class={fieldLabel}>Subject</span>
+        <select class={select} bind:value={spec.pronounKey}>
           {#each pronounOptions as option (option.key)}
             <option value={option.key}>{option.label}</option>
           {/each}
         </select>
       </label>
 
-      <label class="field verb">
-        <span class="label">Verb</span>
-        <select bind:value={spec.verbKey}>
+      <label class={[field, "bg-role-verb"]}>
+        <span class={fieldLabel}>Verb</span>
+        <select class={select} bind:value={spec.verbKey}>
           {#each verbOptions as option (option.key)}
             <option value={option.key}>{option.label}</option>
           {/each}
         </select>
       </label>
 
-      <label class="field object" class:disabled={objects.length === 0}>
-        <span class="label">Object</span>
-        <select bind:value={spec.objectIndex} disabled={objects.length === 0}>
+      <label class={[field, "bg-role-object", { "opacity-45": objects.length === 0 }]}>
+        <span class={fieldLabel}>Object</span>
+        <select class={select} bind:value={spec.objectIndex} disabled={objects.length === 0}>
           {#if !objectNeeded}
             <option value={NO_OBJECT}>
               {objects.length === 0 ? "none available" : "— no object —"}
@@ -105,22 +120,23 @@
           {/each}
         </select>
       </label>
-
     </div>
 
-    <div class="row">
-      <label class="field">
-        <span class="label">Mode</span>
-        <select bind:value={spec.mode}>
+    <div class="mb-3 flex flex-wrap items-end gap-4">
+      <!-- Mode picks no part of speech, so it has no colour; it keeps the same
+           padding as the coloured fields so the row stays aligned. -->
+      <label class={field}>
+        <span class="text-[13px] text-[#888]">Mode</span>
+        <select class={select} bind:value={spec.mode}>
           {#each modeOptions as option (option.key)}
             <option value={option.key}>{option.label}</option>
           {/each}
         </select>
       </label>
 
-      <label class="field modal" class:disabled={!modalEnabled}>
-        <span class="label">Modal verb</span>
-        <select bind:value={spec.modalVerb} disabled={!modalEnabled}>
+      <label class={[field, "bg-role-modal", { "opacity-45": !modalEnabled }]}>
+        <span class={fieldLabel}>Modal verb</span>
+        <select class={select} bind:value={spec.modalVerb} disabled={!modalEnabled}>
           {#each modalOptions as option (option.key)}
             <option value={option.key}>{option.label}</option>
           {/each}
@@ -128,172 +144,43 @@
       </label>
     </div>
 
-    <div class="row">
-      <fieldset>
-        <legend>Aspect and voice</legend>
-        <label><input type="checkbox" bind:checked={spec.perfect} /> perfect</label>
-        <label><input type="checkbox" bind:checked={spec.continuous} /> continuous</label>
-        <label class="passive"><input type="checkbox" bind:checked={spec.passive} /> passive</label>
+    <div class="mb-3 flex flex-wrap items-end gap-4">
+      <fieldset class="flex flex-wrap gap-3 rounded-[5px] border border-[#ddd] px-3 pt-2 pb-2.5">
+        <legend class="px-1 text-[13px] text-[#888]">Aspect and voice</legend>
+        <label class={chip}><input class={checkbox} type="checkbox" bind:checked={spec.perfect} /> perfect</label>
+        <label class={chip}><input class={checkbox} type="checkbox" bind:checked={spec.continuous} /> continuous</label>
+        <label class={[chip, "bg-role-passive"]}
+          ><input class={checkbox} type="checkbox" bind:checked={spec.passive} /> passive</label
+        >
       </fieldset>
 
-      <fieldset>
-        <legend>Sentence type</legend>
-        <label class="negative"><input type="checkbox" bind:checked={spec.negative} /> negative</label>
-        <label><input type="checkbox" bind:checked={spec.interrogative} /> interrogative</label>
-        <label class="contraction"><input type="checkbox" bind:checked={spec.contract} /> contractions</label>
+      <fieldset class="flex flex-wrap gap-3 rounded-[5px] border border-[#ddd] px-3 pt-2 pb-2.5">
+        <legend class="px-1 text-[13px] text-[#888]">Sentence type</legend>
+        <label class={[chip, "bg-role-negation"]}
+          ><input class={checkbox} type="checkbox" bind:checked={spec.negative} /> negative</label
+        >
+        <label class={chip}
+          ><input class={checkbox} type="checkbox" bind:checked={spec.interrogative} /> interrogative</label
+        >
+        <label class={[chip, "bg-role-contraction"]}
+          ><input class={checkbox} type="checkbox" bind:checked={spec.contract} /> contractions</label
+        >
       </fieldset>
     </div>
   </div>
 
   <Sentence {spec} />
 
-  <div class="buttons">
-    <button onclick={save}>Save</button>
-    <button onclick={reset} disabled={saved.length === 0}>Clear saved</button>
+  <div class="mt-5 flex gap-2">
+    <button class={button} onclick={save}>Save</button>
+    <button class={button} onclick={reset} disabled={saved.length === 0}>Clear saved</button>
   </div>
 
   {#if saved.length > 0}
-    <div class="saved">
+    <div class="mt-4 border-t border-[#ddd] pt-2">
       {#each saved as savedSpec, index (index)}
         <Sentence spec={savedSpec} />
       {/each}
     </div>
   {/if}
 </main>
-
-<style>
-  main {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px 16px 60px;
-  }
-
-  h1 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .logo {
-    flex: none;
-  }
-
-  .desc {
-    max-width: 640px;
-    color: #666;
-  }
-
-  .controls {
-    margin-bottom: 24px;
-  }
-
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 12px;
-    align-items: flex-end;
-  }
-
-  /* Every field has the same padding, coloured or not, so the controls stay
-     aligned; only the ones that pick a part of the sentence get a background. */
-  .field {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    padding: 6px 10px 9px;
-    border-radius: 5px;
-  }
-
-  .field.subject {
-    background-color: var(--role-subject);
-  }
-
-  .field.verb {
-    background-color: var(--role-verb);
-  }
-
-  .field.object {
-    background-color: var(--role-object);
-  }
-
-  .field.modal {
-    background-color: var(--role-modal);
-  }
-
-  .field.disabled {
-    opacity: 0.45;
-  }
-
-  .label {
-    font-size: 13px;
-    color: #888;
-  }
-
-  /* the pale grey label is too faint on a coloured background */
-  .field:is(.subject, .verb, .object, .modal) .label {
-    color: #555;
-  }
-
-  select {
-    min-width: 130px;
-    padding: 5px;
-    font-size: 16px;
-  }
-
-  fieldset {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 8px 12px 10px;
-    margin: 0;
-  }
-
-  legend {
-    font-size: 13px;
-    color: #888;
-    padding: 0 4px;
-  }
-
-  /* Every option has the same padding, coloured or not, so they stay aligned;
-     only the ones that show up in the sentence get a background. */
-  fieldset label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    padding: 2px 8px;
-    border-radius: 5px;
-  }
-
-  fieldset label.passive {
-    background-color: var(--role-passive);
-  }
-
-  fieldset label.negative {
-    background-color: var(--role-negation);
-  }
-
-  fieldset label.contraction {
-    background-color: var(--role-contraction);
-  }
-
-  .buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 20px;
-  }
-
-  button {
-    padding: 6px 16px;
-    font-size: 16px;
-  }
-
-  .saved {
-    margin-top: 16px;
-    border-top: 1px solid #ddd;
-    padding-top: 8px;
-  }
-</style>

@@ -1,4 +1,10 @@
-:root {
+@import "tailwindcss";
+
+/* Design tokens. `static` makes Tailwind emit every variable even when no
+   utility uses it. Word.svelte builds its stripe gradient from
+   var(--color-role-*) in an inline style, so it must be able to rely on the
+   variables existing whatever utilities happen to be in use. */
+@theme static {
   /* The platform's own UI font: San Francisco on macOS, Segoe UI (Variable on
      Windows 11) on Windows. Nothing to download, and it looks native on both.
      Helvetica Neue / Arial cover older systems, and the generic sans-serif is
@@ -6,40 +12,36 @@
   --font-sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
 
-  font-family: var(--font-sans);
-  line-height: 24px;
-  font-size: 16px;
-  color: #444;
+  /* the blue-violet stop of the favicon gradient */
+  --color-brand: #6c63ff;
 
   /* One colour per part of the sentence. The word tiles use them, and so do
      the controls that pick that part, so a control and the tile it produces
-     visibly belong together. */
-  --role-subject: lightpink;
-  --role-verb: lightgreen;
-  --role-aux: lightskyblue;
-  --role-passive: mediumturquoise;
-  --role-modal: coral;
-  --role-negation: lightgray;
-  --role-object: cornsilk;
-  --role-end: beige;
+     visibly belong together. They become bg-role-subject and so on. */
+  --color-role-subject: lightpink;
+  --color-role-verb: lightgreen;
+  --color-role-aux: lightskyblue;
+  --color-role-passive: mediumturquoise;
+  --color-role-modal: coral;
+  --color-role-negation: lightgray;
+  --color-role-object: cornsilk;
+  --color-role-end: beige;
 
   /* Not a part of speech but a property of a word: the stripe that says a tile
      is a contraction, and the contractions checkbox. */
-  --role-contraction: #bfa8ff;
+  --color-role-contraction: #bfa8ff;
 }
 
-/* Form controls do not inherit the page font by default and would keep the
-   browser's own. */
-select,
-button,
-input {
-  font-family: inherit;
-}
+/* Preflight resets a few browser defaults that the layout was designed on. */
+@layer base {
+  html {
+    color: #444;
+    /* Tailwind's default is relative (1.5), which would grow the word tiles */
+    line-height: 24px;
+  }
 
-h1 {
-  /* the blue-violet stop of the favicon gradient */
-  color: #6c63ff;
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  /* the browser's own 8px page margin, which sets the gutter on a narrow screen */
+  body {
+    margin: 8px;
+  }
 }

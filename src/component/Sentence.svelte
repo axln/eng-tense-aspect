@@ -20,53 +20,21 @@
   const allThreeAspects = $derived(spec.passive && spec.continuous && spec.perfect);
 </script>
 
-<div class="sentence">
-  <div class="caption">
+<div class="my-4" data-sentence>
+  <div class="mb-1.5 text-[14px] text-[#888]">
     {describeSpec(spec)}
     {#if allThreeAspects}
-      <span class="rare">rarely used together</span>
+      <span class="ml-1.5 rounded-[5px] bg-[#fdf0d5] px-1.5 py-px text-[#96702a]">rarely used together</span>
     {/if}
   </div>
 
   {#if result.error}
-    <div class="error">{result.error}</div>
+    <div class="text-base text-[#b3261e]">{result.error}</div>
   {:else}
-    <div class="words">
+    <div class="flex flex-wrap items-end gap-2">
       {#each result.words as word, index (index)}
         <Word {word} />
       {/each}
     </div>
   {/if}
 </div>
-
-<style>
-  .sentence {
-    margin: 16px 0;
-  }
-
-  .caption {
-    margin-bottom: 6px;
-    font-size: 14px;
-    color: #888;
-  }
-
-  .rare {
-    margin-left: 6px;
-    padding: 1px 6px;
-    border-radius: 5px;
-    background-color: #fdf0d5;
-    color: #96702a;
-  }
-
-  .words {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: flex-end;
-  }
-
-  .error {
-    color: #b3261e;
-    font-size: 16px;
-  }
-</style>
