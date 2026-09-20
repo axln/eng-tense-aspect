@@ -56,11 +56,14 @@ export function buildSentence({
   } else {
     // making the first verb in chain personal by applying tense and subject (person and number)
     const firstVerb = verbChain[0] as Verb;
-    // if first verb isn't be or have, we must use do-support for negative and interrogative
-    if (
-      (interrogative || negative) &&
-      !["be", "have"].includes(firstVerb.base)
-    ) {
+    // Negatives and questions need do-support unless the first verb is be or
+    // an auxiliary have. Main-verb have needs it: "I don't have a car", not
+    // the formal "I haven't a car" - and only the role tells the two apart.
+    const isBe = firstVerb.base === "be";
+    const isAuxHave =
+      firstVerb.base === "have" && firstVerb.role === WordRole.aux;
+
+    if ((interrogative || negative) && !isBe && !isAuxHave) {
       verbChain.unshift(new IrregularVerb("do", WordRole.aux));
     }
     (verbChain[0] as Verb).makePersonal(

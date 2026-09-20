@@ -6,18 +6,29 @@ import type { ContractionRule } from "~/spelling/Contractions";
 // role and one of these spellings is the copula "be".
 const beForms = new Set(["am", "is", "are", "was", "were"]);
 
-// English blocks a subject+verb contraction in two cases:
+// English blocks a subject+verb contraction in three cases:
 //
 // 1. the verb is stranded at the end of the clause, with the rest elided:
 //    "Yes, he is." never "Yes, he's.", "taller than I am." never "than I'm.";
 // 2. the verb is a semantic verb rather than an auxiliary: "I have a car",
-//    not "I've a car".
+//    not "I've a car";
+// 3. the modal is being negated: "I shall not go", not the archaic "I'll not
+//    go". (Modals with a contracted negative have already become "won't",
+//    "mustn't" and so on, so shall is the only one that gets this far.)
 //
 // The copula is the exception to the second case. It carries the verb role
 // here because it is the only verb in the chain, but "He's hungry." is the
 // ordinary way to say it, so it contracts like an auxiliary.
-function contractible(secondWord: Word, clauseFinal: boolean): boolean {
+function contractible(
+  secondWord: Word,
+  nextWord: Word | undefined,
+  clauseFinal: boolean
+): boolean {
   if (clauseFinal) {
+    return false;
+  }
+
+  if (secondWord.role === WordRole.modal && nextWord?.role === WordRole.negation) {
     return false;
   }
 
@@ -41,7 +52,7 @@ export function applyContraction(
 
       if (
         `${firstWord.text} ${secondWord.text}` === contraction.from &&
-        contractible(secondWord, clauseFinal)
+        contractible(secondWord, words[i + 2], clauseFinal)
       ) {
         newWords.push({
           text: contraction.to,
