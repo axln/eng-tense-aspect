@@ -45,3 +45,15 @@ export function applyContractions(
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+// The pronoun "i" is kept lowercase like every other word so that the
+// contraction rules can match it. It is the one word that must be capitalized
+// wherever it stands, so it is restored here, after contractions have run:
+// "i" itself and its contracted forms "i'm", "i've", "i'd", "i'll".
+export function capitalizePronounI(words: Word[]): Word[] {
+  return words.map((word) =>
+    word.text === "i" || word.text.startsWith("i'")
+      ? { ...word, text: capitalize(word.text) }
+      : word
+  );
+}

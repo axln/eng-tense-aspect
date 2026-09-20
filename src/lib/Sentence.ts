@@ -7,7 +7,12 @@ import { contractions } from "~/spelling/Contractions";
 import { WordRole } from "~/type";
 import { Pronoun } from "~/lib/Pronoun";
 import { Modal } from "~/lib/Modal";
-import { applyContractions, applyContraction, capitalize } from "~/lib/Helper";
+import {
+  applyContractions,
+  applyContraction,
+  capitalize,
+  capitalizePronounI,
+} from "~/lib/Helper";
 
 function buildVerbChain(verb: Verb, verbMode: VerbMode): BaseVerb[] {
   const verbs = [verb];
@@ -91,6 +96,9 @@ export function buildSentence({
     from: "can not",
     to: "cannot",
   });
+
+  // always applied: "i" is uppercase wherever it stands in the sentence
+  words = capitalizePronounI(words);
 
   // capitalize and finalize
   words.push({

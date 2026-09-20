@@ -66,7 +66,9 @@ export const pronounList: PronounList = {
     grammarNumber: GrammarNumber.singular,
     gender: GrammarGender.neuter,
     spelling: {
-      subject: "I",
+      // lowercase like every other word, so the contraction rules match it;
+      // capitalizePronounI restores it at the end of buildSentence
+      subject: "i",
       object: "me",
       possessive_adjective: "my",
       possessive_pronoun: "mine",

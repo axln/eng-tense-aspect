@@ -4,12 +4,12 @@ export type ContractionRule = {
 };
 
 export const contractions: ContractionRule[] = [
-  { from: "i am", to: "I'm" },
-  { from: "i had", to: "I'd" },
-  { from: "i have", to: "I've" },
-  { from: "i will", to: "I'll" },
-  { from: "i shall", to: "I'll" },
-  { from: "i would", to: "I'd" },
+  { from: "i am", to: "i'm" },
+  { from: "i had", to: "i'd" },
+  { from: "i have", to: "i've" },
+  { from: "i will", to: "i'll" },
+  { from: "i shall", to: "i'll" },
+  { from: "i would", to: "i'd" },
 
   { from: "we are", to: "we're" },
   { from: "we had", to: "we'd" },
