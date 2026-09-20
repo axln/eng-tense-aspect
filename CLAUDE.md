@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git
+
+**Do not commit or push until the user explicitly asks.** Make the changes, verify them, and stop; leave them uncommitted in the working tree. A request to make a change is not a request to commit it, and an earlier "commit and push" does not carry over to later changes.
+
 ## Project
 
 A Svelte 5 + Vite + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). There is no test runner or linter configured.
