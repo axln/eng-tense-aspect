@@ -1,6 +1,7 @@
 import type { Word } from "~/type";
 import { WordRole } from "~/type";
 import { BaseVerb } from "~/lib/BaseVerb";
+import { contractedNegative } from "~/lib/Helper";
 
 export class Modal extends BaseVerb {
   renderToWords(): Word[] {
@@ -13,8 +14,7 @@ export class Modal extends BaseVerb {
       const contracted = this.contract ? negativeContractions[this.base] : undefined;
 
       if (contracted) {
-        words[0].text = contracted;
-        words[0].form = "ctr";
+        words[0] = contractedNegative(contracted, WordRole.modal);
       } else {
         const notAdverb = {
           text: "not",

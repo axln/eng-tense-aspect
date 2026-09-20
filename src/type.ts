@@ -9,10 +9,21 @@ export enum WordRole {
   end = "end",
 }
 
+// One piece of a contracted word: the "I" and the "'m" of "I'm", the "has" and
+// the "n't" of "hasn't". Each keeps the role it had before the words merged.
+export type WordPart = {
+  text: string;
+  role: WordRole;
+};
+
 export type Word = {
   text: string; // word spelling
   role: WordRole; // role in the sentence: modal, aux, negation, verb, passive,
   form?: string; // grammatical form
+  // Only on a contracted word, which is several words written as one. There
+  // are always at least two parts, their texts joined make `text`, and `role`
+  // is the role of the first. Nothing else has parts.
+  parts?: WordPart[];
 };
 
 export enum GrammarPerson {

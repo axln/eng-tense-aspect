@@ -23,8 +23,8 @@
   --role-object: cornsilk;
   --role-end: beige;
 
-  /* Not a part of speech but a property of a word: a contracted word keeps its
-     role colour and gets a stripe in this one. */
+  /* Not a part of speech but a property of a word: the stripe that says a tile
+     is a contraction, and the contractions checkbox. */
   --role-contraction: #bfa8ff;
 }
 

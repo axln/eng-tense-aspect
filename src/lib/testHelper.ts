@@ -1,3 +1,4 @@
+import type { Word } from "~/type";
 import type { ModalVerb } from "~/lib/Modal";
 import { Modal } from "~/lib/Modal";
 import { Pronoun } from "~/lib/Pronoun";
@@ -20,9 +21,9 @@ export type SayOptions = {
   contract?: boolean;
 };
 
-// Builds a fresh sentence as text. buildSentence mutates the verbs it is
+// Builds a fresh sentence as words. buildSentence mutates the verbs it is
 // handed, so nothing here is shared between calls.
-export function say(options: SayOptions = {}): string {
+export function words(options: SayOptions = {}): Word[] {
   const {
     subject = "he",
     verb = "go:i",
@@ -37,7 +38,7 @@ export function say(options: SayOptions = {}): string {
     contract = false,
   } = options;
 
-  const words = buildSentence({
+  return buildSentence({
     mode,
     subject: new Pronoun(subject),
     modalVerb: modal ? new Modal(modal) : undefined,
@@ -48,7 +49,12 @@ export function say(options: SayOptions = {}): string {
     contract,
     object,
   });
+}
 
-  // "he goes ." -> "he goes."
-  return words.map((word) => word.text).join(" ").replace(/ ([.?])$/, "$1");
+// The same sentence as plain text: "he goes ." -> "he goes."
+export function say(options: SayOptions = {}): string {
+  return words(options)
+    .map((word) => word.text)
+    .join(" ")
+    .replace(/ ([.?])$/, "$1");
 }

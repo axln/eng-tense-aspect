@@ -3,6 +3,7 @@ import { WordRole } from "~/type";
 import { verbList } from "~/spelling/VerbList";
 import { BaseVerb } from "~/lib/BaseVerb";
 import { Pronoun } from "~/lib/Pronoun";
+import { contractedNegative } from "~/lib/Helper";
 
 export class Verb extends BaseVerb {
   public form: VerbForm = VerbForm.base;
@@ -64,8 +65,7 @@ export class Verb extends BaseVerb {
 
     if (this.negative) {
       if (this.contract) {
-        words[0].text += "n't";
-        words[0].form = "ctr";
+        words[0] = contractedNegative(`${words[0].text}n't`, this.role);
       } else {
         words.push({
           text: "not",

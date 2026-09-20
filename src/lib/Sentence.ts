@@ -10,7 +10,7 @@ import { Modal } from "~/lib/Modal";
 import {
   applyContractions,
   applyContraction,
-  capitalize,
+  capitalizeWord,
   capitalizePronounI,
 } from "~/lib/Helper";
 
@@ -118,7 +118,7 @@ export function buildSentence({
     text: interrogative ? "?" : ".",
     role: WordRole.end,
   });
-  words[0].text = capitalize(words[0].text);
+  words[0] = capitalizeWord(words[0]);
 
   return words;
 }

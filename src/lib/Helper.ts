@@ -1,4 +1,4 @@
-import type { Word } from "~/type";
+import type { Word, WordPart } from "~/type";
 import { WordRole } from "~/type";
 import type { ContractionRule } from "~/spelling/Contractions";
 
@@ -35,6 +35,50 @@ function contractible(
   return secondWord.role !== WordRole.verb || beForms.has(secondWord.text);
 }
 
+// A contracted word is several words written as one, and each part keeps its
+// own role: "I'm" in "I'm asked" is the subject plus the passive auxiliary, and
+// "hasn't" is the auxiliary plus the negation. `text` and `role` stay what they
+// always were, so anything that ignores the parts still works.
+export function contractedWord(parts: WordPart[]): Word {
+  return {
+    text: parts.map((part) => part.text).join(""),
+    role: parts[0].role,
+    form: "ctr",
+    parts,
+  };
+}
+
+// "hasn't", "can't", "won't", "aren't": the verb, then the negation "n't".
+// Every contracted negative ends in "n't", including the irregular "ca|n't" and
+// "wo|n't", so the split is always the last three letters.
+export function contractedNegative(text: string, role: WordRole): Word {
+  const stem = text.slice(0, -"n't".length);
+
+  return contractedWord([
+    { text: stem, role },
+    { text: "n't", role: WordRole.negation },
+  ]);
+}
+
+// Merges two neighbouring words into one contraction. Where to cut the
+// contracted spelling comes from the apostrophe ("he|'s", "should|'ve"); with
+// none ("can not" -> "cannot") the first word's own length is the cut.
+function mergeWords(first: Word, second: Word, text: string): Word {
+  // a word that is already a contraction cannot be cut again from its
+  // spelling; no rule produces one today, so keep it whole rather than guess
+  if (first.parts || second.parts) {
+    return { text, role: first.role, form: "ctr" };
+  }
+
+  const apostrophe = text.indexOf("'");
+  const cut = apostrophe > 0 ? apostrophe : first.text.length;
+
+  return contractedWord([
+    { text: text.slice(0, cut), role: first.role },
+    { text: text.slice(cut), role: second.role },
+  ]);
+}
+
 export function applyContraction(
   words: Word[],
   contraction: ContractionRule
@@ -54,11 +98,7 @@ export function applyContraction(
         `${firstWord.text} ${secondWord.text}` === contraction.from &&
         contractible(secondWord, words[i + 2], clauseFinal)
       ) {
-        newWords.push({
-          text: contraction.to,
-          role: firstWord.role,
-          form: "ctr",
-        });
+        newWords.push(mergeWords(firstWord, secondWord, contraction.to));
         ++i; // skip the next word
       } else {
         newWords.push(words[i]);
@@ -84,6 +124,22 @@ export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// Capitalizes a word, and the first part of a contracted one so that its text
+// and its parts still agree: "he's" is "he" + "'s", so it becomes "He" + "'s".
+export function capitalizeWord(word: Word): Word {
+  if (!word.parts) {
+    return { ...word, text: capitalize(word.text) };
+  }
+
+  const [first, ...rest] = word.parts;
+
+  return {
+    ...word,
+    text: capitalize(word.text),
+    parts: [{ ...first, text: capitalize(first.text) }, ...rest],
+  };
+}
+
 // The pronoun "i" is kept lowercase like every other word so that the
 // contraction rules can match it. It is the one word that must be capitalized
 // wherever it stands, so it is restored here, after contractions have run:
@@ -91,7 +147,7 @@ export function capitalize(str: string): string {
 export function capitalizePronounI(words: Word[]): Word[] {
   return words.map((word) =>
     word.text === "i" || word.text.startsWith("i'")
-      ? { ...word, text: capitalize(word.text) }
+      ? capitalizeWord(word)
       : word
   );
 }

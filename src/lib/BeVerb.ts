@@ -1,6 +1,7 @@
 import type { Word } from "~/type";
 import { GrammarPerson, WordRole } from "~/type";
 import { Verb, VerbForm } from "~/lib/Verb";
+import { contractedNegative } from "~/lib/Helper";
 
 export class BeVerb extends Verb {
   // "am not" is the gap in the negation paradigm: there is no standard
@@ -10,13 +11,7 @@ export class BeVerb extends Verb {
     if (this.negative && this.contract && this.subject && this.getVerbForm() === "am") {
       // a question takes suppletive "aren't": "Aren't I late?"
       if (this.interrogative) {
-        return [
-          {
-            text: "aren't",
-            form: "ctr",
-            role: this.role,
-          },
-        ];
+        return [contractedNegative("aren't", this.role)];
       }
 
       // a statement contracts the subject instead and leaves "not" alone,

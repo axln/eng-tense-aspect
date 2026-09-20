@@ -2,17 +2,49 @@
   import type { Word } from "~/type";
 
   let { word }: { word: Word } = $props();
+
+  // One equal horizontal stripe per part, top to bottom in reading order, then
+  // one for the contraction itself. Every role name is also the name of its
+  // --role-* colour.
+  const stripeColors = $derived(
+    word.parts
+      ? [...word.parts.map((part) => `var(--role-${part.role})`), "var(--role-contraction)"]
+      : []
+  );
+
+  const stripes = $derived.by(() => {
+    const step = 100 / stripeColors.length;
+    const bands = stripeColors.map((color, i) => `${color} ${i * step}% ${(i + 1) * step}%`);
+
+    return `linear-gradient(to bottom, ${bands.join(", ")})`;
+  });
 </script>
 
-<div class="word {word.role}" class:contracted={word.form === "ctr"}>
-  <div class="meta">
-    <span class="role">{word.role}</span>
-    {#if word.form}
-      <span class="form">{word.form}</span>
-    {/if}
+{#if word.parts}
+  <!-- A contraction is several words written as one, so the word stays one
+       unbroken piece of text ("She's", never "She" + "'s"). What it is made of
+       is shown by horizontal stripes behind it: one per part, each labelled
+       with its own role, and a lavender one for the contraction itself. -->
+  <div class="word contracted" title="contraction" style:background-image={stripes}>
+    <div class="stripes">
+      {#each word.parts as part, index (index)}
+        <span class="stripe">{part.role}</span>
+      {/each}
+      <span class="stripe">ctr</span>
+    </div>
+    <span class="text">{word.text}</span>
   </div>
-  <span class="text">{word.text}</span>
-</div>
+{:else}
+  <div class="word {word.role}">
+    <div class="meta">
+      <span class="role">{word.role}</span>
+      {#if word.form}
+        <span class="form">{word.form}</span>
+      {/if}
+    </div>
+    <span class="text">{word.text}</span>
+  </div>
+{/if}
 
 <style>
   /* A flex column rather than absolute labels, so the tile always grows
@@ -25,6 +57,37 @@
     border-radius: 5px;
     text-align: center;
     background-color: #eee;
+  }
+
+  /* The labels sit in a column on the left and the word on the right. The
+     stripes are equal thirds (or quarters) of the height, and the labels split
+     the height equally too, so each label lands on its own stripe. */
+  .word.contracted {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 10px;
+    min-height: 47px; /* the height of an ordinary tile, so the row stays level */
+    padding: 0 10px 0 8px;
+  }
+
+  .stripes {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    font-size: 11px;
+    line-height: 14px;
+    text-align: left;
+    opacity: 0.75;
+  }
+
+  .stripe {
+    display: flex;
+    flex: 1;
+    align-items: center;
+  }
+
+  .word.contracted .text {
+    align-self: center;
   }
 
   .meta {
@@ -42,11 +105,6 @@
 
   .text {
     font-size: 26px;
-  }
-
-  /* an inset stripe rather than a border, so the tile keeps its size */
-  .word.contracted {
-    box-shadow: inset 0 -5px 0 var(--role-contraction);
   }
 
   .word.subject {
