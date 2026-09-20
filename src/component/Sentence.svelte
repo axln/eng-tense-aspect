@@ -53,7 +53,7 @@
   .rare {
     margin-left: 6px;
     padding: 1px 6px;
-    border-radius: 3px;
+    border-radius: 5px;
     background-color: #fdf0d5;
     color: #96702a;
   }
