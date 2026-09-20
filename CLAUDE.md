@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A Svelte 5 + Vite + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). Tests use vitest; there is no linter configured.
+A Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app that generates English sentences for every tense/aspect/voice combination and renders each word labelled with its grammatical role. Yarn is the package manager (`yarn.lock`). Tests use vitest; there is no linter configured.
 
 ## Commands
 
@@ -27,7 +27,7 @@ Always run type checks through `yarn run check` (or pass `--tsconfig ./tsconfig.
 
 ## Architecture
 
-The core is a pure sentence-building pipeline in `src/lib/`, kept free of UI concerns. The UI lives in `src/App.svelte` (controls) and `src/component/` (`Sentence.svelte`, `Word.svelte`), and is written with Svelte 5 runes (`$state`, `$derived`, `$props`). The colour of each part of the sentence is defined once, as `--role-*` custom properties in `src/app.css`, and used by both the word tiles (`Word.svelte`) and the control that picks that part (the subject, verb, object and modal fields and the passive and negative checkboxes in `App.svelte`), so a control visibly matches the tile it produces. `--role-contraction` is the odd one out: a contraction is a property of a word rather than a part of speech, so it is drawn as a stripe under the tile (see *Contracted words* below), and the contractions checkbox uses it too. Change a colour there, not in either component.
+The core is a pure sentence-building pipeline in `src/lib/`, kept free of UI concerns. The UI lives in `src/App.svelte` (controls) and `src/component/` (`Sentence.svelte`, `Word.svelte`), and is written with Svelte 5 runes (`$state`, `$derived`, `$props`). The colour of each part of the sentence is defined once, as `--color-role-*` tokens in the `@theme` block of `src/app.css` (utilities `bg-role-subject` and so on), and used by both the word tiles (`Word.svelte`) and the control that picks that part (the subject, verb, object and modal fields and the passive and negative checkboxes in `App.svelte`), so a control visibly matches the tile it produces. `--color-role-contraction` is the odd one out: a contraction is a property of a word rather than a part of speech, so it is drawn as a stripe on the tile (see *Contracted words* below), and the contractions checkbox uses it too. Change a colour there, not in either component.
 
 `src/lib/SentenceSpec.ts` is the bridge between them. It holds `SentenceSpec`, a flat record of exactly what the controls bind to, plus the dropdown option lists and `specToParams`, which turns a spec into a fresh `SentenceParams`. Build the params fresh on every render: `buildSentence` mutates the verbs it is handed (it sets their `form`), so a reused `Verb` instance produces wrong output the second time.
 
@@ -50,6 +50,16 @@ The three aspect checkboxes (perfect, continuous, passive) map straight onto `ve
 `contractible` in `Helper.ts` encodes where English blocks a subject+verb contraction: when the verb is **stranded** at the end of the clause with the rest elided (`Yes, he is.`, never `Yes, he's.`), when it is a **semantic verb** rather than an auxiliary (`I have a car`, not `I've a car`), and when the **modal is being negated** (`I shall not go`, not the archaic `I'll not go`; the other negated modals have already become `won't`, `mustn't` etc. by then, so only `shall` reaches this check). The copula is the exception to the second rule — it carries `WordRole.verb` because it is the only verb in the chain, but `He's hungry.` is ordinary English, so `beForms` lets it contract. Stranding is detected by position: the end punctuation has not been appended yet, so the last element of the array is the last word of the clause.
 
 `am not` is the gap in the negation paradigm — there is no standard `amn't` — and it is the only negation whose form depends on the sentence type, so `BeVerb` overrides `renderToWords`: a question takes suppletive `aren't I`, a statement emits an uncontracted `am` + `not` and lets the subject contract instead, giving `I'm not`. `BaseVerb.interrogative` exists solely to carry that distinction down from `buildSentence`.
+
+### Styling (Tailwind v4)
+
+Tailwind comes in through `@tailwindcss/vite` (before the Svelte plugin in `vite.config.ts`), and `src/app.css` is its entry: `@import "tailwindcss"`, then the design tokens in `@theme static` (the system UI font stack, `--color-brand`, and the `--color-role-*` colours). There are no `<style>` blocks; components are styled with utility classes in the markup. Things that will bite:
+
+- **Class names must appear in the source in full.** Tailwind finds them by reading the text, so `bg-role-${role}` generates nothing and fails silently. `Word.svelte` keeps an explicit `roleBackground` lookup for this reason; `App.svelte` writes its repeated class strings out as constants (`field`, `select`, `chip`, `button`). Compose classes with Svelte's clsx-style `class` value, not string interpolation or the `class:` directive: `class={[field, "bg-role-object", { "opacity-45": objects.length === 0 }]}` (an array of strings, with objects for the conditional ones; falsy entries are dropped). Every class name in it is still a complete string literal, so Tailwind finds it.
+- **The stripe gradient in `Word.svelte` is an inline style**, so it reads the tokens as `var(--color-role-*)`; that is why the theme block is `static`.
+- **Preflight resets what the layout was designed on**, so the app restores it deliberately. In `app.css` a fixed `line-height: 24px` on `html` (Tailwind's 1.5 would grow the tiles) and the browser's 8px `body` margin. In the components, `max-w-[932px]` (border-box: 900px of content plus 16px padding each side) and `min-w-[66px]` / `min-w-[46px]` on tiles (the old `min-width` was content-box: 50px or 30px plus 16px of padding), `my-[0.67em]` on the `h1` and `my-4` on the `p` for the default margins, and `m-[3px_3px_3px_4px]` on checkboxes for theirs. Preflight also strips selects and buttons to nothing, so they are styled explicitly (`select`, `button` constants).
+- **Do not use `text-sm`, `text-xs` and the like on text inside the tiles or captions.** Those set their own line height; the layout relies on the inherited 24px, so use an arbitrary size such as `text-[14px]`, which sets only the font size.
+- `data-sentence` marks the root of each rendered sentence, a stable hook for tests and scripts that should not depend on class names.
 
 ### Contracted words
 
