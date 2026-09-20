@@ -75,3 +75,7 @@ To deploy your own copy, set the repository's Pages source to **GitHub Actions**
 ## Notes for AI assistants
 
 [`CLAUDE.md`](CLAUDE.md) holds the working notes for Claude Code: the architecture, the grammar decisions and the reasons behind them, and the traps that are easy to fall into.
+
+## License
+
+[MIT](LICENSE)
