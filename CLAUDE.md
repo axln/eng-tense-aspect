@@ -20,7 +20,7 @@ Conventions used so far: split the work into logical commits (docs in their own)
 
 **Sentence Constructor**: a Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app, live at https://axln.github.io/eng-tense-aspect/ (repository `axln/eng-tense-aspect`, public). It replaces the big English tense tables: the user picks a subject, verb, object and aspect, and it generates the sentence for every tense/aspect/voice/negation/question combination, drawing each word as a tile labelled and coloured by its grammatical role. The audience is ESL learners and their teachers. It is a static site with no backend. Yarn Classic is the package manager (`yarn.lock`); tests use vitest; there is no ESLint or Prettier. It is MIT licensed (`LICENSE`, and `"license": "MIT"` in `package.json`), copyright Alexey Nesterenko.
 
-`README.md` is for GitHub visitors, with a screenshot in `docs/screenshot.png` (taken at v0.1.7). Keep the facts in it checkable (it states 7 pronouns, 114 verbs, 11 modals) and retake the screenshot if the UI changes noticeably.
+`README.md` is for GitHub visitors, with a screenshot in `docs/screenshot.png` (taken at v0.1.10). Keep the facts in it checkable (it states 7 pronouns, 114 verbs, 11 modals) and retake the screenshot if the UI changes noticeably.
 
 ## Commands
 
