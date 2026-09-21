@@ -1,5 +1,6 @@
 <script lang="ts">
   import Sentence from "~/component/Sentence.svelte";
+  import VerbForms from "~/component/VerbForms.svelte";
   import { ModalVerb } from "~/lib/Modal";
   import { SentenceMode } from "~/lib/Sentence";
   import {
@@ -106,14 +107,20 @@
         </select>
       </label>
 
-      <label class={[field, "bg-role-verb"]}>
-        <span class={fieldLabel}>Verb</span>
-        <select class={select} bind:value={spec.verbKey}>
-          {#each verbOptions as option (option.key)}
-            <option value={option.key}>{option.label}</option>
-          {/each}
-        </select>
-      </label>
+      <div class="relative">
+        <label class={[field, "bg-role-verb"]}>
+          <span class={fieldLabel}>Verb</span>
+          <select class={select} bind:value={spec.verbKey}>
+            {#each verbOptions as option (option.key)}
+              <option value={option.key}>{option.label}</option>
+            {/each}
+          </select>
+        </label>
+
+        <!-- Outside the label, so a click on the popup's text does not move
+             focus to the select. -->
+        <VerbForms verbKey={spec.verbKey} />
+      </div>
 
       <label class={[field, "bg-role-object", { "opacity-45": objects.length === 0 }]}>
         <span class={fieldLabel}>Object</span>
