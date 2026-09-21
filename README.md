@@ -18,6 +18,7 @@ It is made for learners of English as a second language and for the people who t
 - **Shows the structure.** Each word is a tile coloured by its role (subject, verb, auxiliary, passive, modal, negation, object), and the controls that pick a part of the sentence use the same colour as the tile they produce.
 - **Frames the verb phrase.** In English a chain of verbs works as one verb: only the first word takes the tense and the agreement. The chain is drawn inside one frame titled *verb phrase*. In a question the subject moves into the chain (*Have **you** been going?*), so the phrase is split in two and both halves carry the same title.
 - **Shows what a contraction is made of.** *I'm* is drawn as one unbroken word on horizontal stripes: the subject *I*, the auxiliary *'m*, and a lavender stripe that says it is a contraction.
+- **Shows the forms of a verb as a chart.** The *forms* link in the corner of the verb field opens an "elementary chart" of the verb: the base form in the middle, the finite forms on the left and the participles on the right, present above and past below (*go / goes, going, went, gone*).
 - **Saves sentences** so you can put several side by side and compare them.
 
 ## Run it locally
