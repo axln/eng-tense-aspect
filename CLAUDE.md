@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Do not commit or push until the user explicitly asks.** Make the changes, verify them, and stop; leave them uncommitted in the working tree. A request to make a change is not a request to commit it, and an earlier "commit and push" does not carry over to later changes.
 
-**The deploy workflow pushes to `main` too** (see *Deployment*): after every deploy it commits a version bump, so the remote is usually one commit ahead of the local branch. Run `git pull --rebase` before pushing, or the push is rejected.
+**The deploy workflow pushes to `main` too** (see *Deployment*): after every deploy it commits a version bump, so the remote is usually one commit ahead of the local branch. Run `git pull --rebase` before pushing, or the push is rejected. **After pushing, wait for the deploy run to finish** (poll `https://api.github.com/repos/axln/eng-tense-aspect/actions/runs?head_sha=<pushed sha>` until `status` is `completed`), report its `conclusion`, and then `git pull --rebase` yourself, so the local copy has the version-bump commit.
 
 Conventions used so far: split the work into logical commits (docs in their own), each one building and passing on its own, which is checked in a throwaway `git worktree` before pushing; a short imperative subject and a body that says *why*; the `Co-Authored-By` trailer given in the session's attribution reminder.
 
