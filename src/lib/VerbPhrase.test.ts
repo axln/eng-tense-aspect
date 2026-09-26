@@ -41,15 +41,64 @@ describe("a chain of verbs is one verb phrase", () => {
     ).toEqual([["has", "been", "being", "bought"]]);
   });
 
-  it("modals take part", () => {
-    expect(frames({ mode: modalMode, modal: ModalVerb.will })).toEqual([["will", "go"]]);
-    expect(
-      frames({ mode: modalMode, modal: ModalVerb.will, perfect: true, continuous: true })
-    ).toEqual([["will", "have", "been", "going"]]);
-  });
-
   it("do-support makes a phrase too: does not buy", () => {
     expect(frames({ verb: "buy:i", negative: true })).toEqual([["does", "not", "buy"]]);
+  });
+});
+
+// The modal says what kind of sentence it is, so it stands outside the frame,
+// and so does its negation
+describe("the modal is not part of the phrase", () => {
+  it("the rest of the chain is framed without it", () => {
+    expect(layout({ mode: modalMode, modal: ModalVerb.will, perfect: true, continuous: true })).toEqual([
+      [false, ["He"]],
+      [false, ["will"]],
+      [true, ["have", "been", "going"]],
+      [false, ["."]],
+    ]);
+  });
+
+  it("a modal and one verb make no phrase", () => {
+    expect(frames({ mode: modalMode, modal: ModalVerb.will })).toEqual([]);
+    expect(frames({ mode: modalMode, modal: ModalVerb.ought_to })).toEqual([]);
+    expect(frames({ mode: modalMode, modal: ModalVerb.can, negative: true, contract: true })).toEqual([]);
+  });
+
+  it("the negation stays with the modal", () => {
+    expect(frames({ mode: modalMode, modal: ModalVerb.must, negative: true, perfect: true })).toEqual([
+      ["have", "gone"],
+    ]);
+    expect(
+      frames({ mode: modalMode, modal: ModalVerb.can, negative: true, perfect: true, contract: true })
+    ).toEqual([["have", "gone"]]);
+    expect(frames({ mode: modalMode, modal: ModalVerb.can, negative: true, perfect: true })).toEqual([
+      ["have", "gone"],
+    ]);
+    expect(
+      frames({ mode: modalMode, modal: ModalVerb.ought_to, negative: true, perfect: true })
+    ).toEqual([["have", "gone"]]);
+    expect(
+      frames({ mode: modalMode, modal: ModalVerb.had_better, negative: true, perfect: true })
+    ).toEqual([["have", "gone"]]);
+  });
+
+  it("in a question too", () => {
+    expect(
+      layout({ mode: modalMode, modal: ModalVerb.may, negative: true, perfect: true, interrogative: true })
+    ).toEqual([
+      [false, ["May"]],
+      [false, ["he"]],
+      [false, ["not"]],
+      [true, ["have", "gone"]],
+      [false, ["?"]],
+    ]);
+  });
+
+  // "should've" is one word on the page, so it is framed whole, like "I'm"
+  it("a modal contracted with the auxiliary goes in with it", () => {
+    expect(
+      frames({ subject: "I", mode: modalMode, modal: ModalVerb.should, perfect: true, contract: true })
+    ).toEqual([["should've", "gone"]]);
   });
 });
 
@@ -85,9 +134,6 @@ describe("the negation sits inside the phrase", () => {
     expect(frames({ verb: "buy:i", negative: true, contract: true })).toEqual([
       ["doesn't", "buy"],
     ]);
-    expect(
-      frames({ mode: modalMode, modal: ModalVerb.can, negative: true, contract: true })
-    ).toEqual([["can't", "go"]]);
   });
 });
 
@@ -144,10 +190,15 @@ describe("in a question the subject splits the phrase", () => {
     ]);
   });
 
-  it("a modal question", () => {
-    expect(frames({ mode: modalMode, modal: ModalVerb.can, interrogative: true })).toEqual([
-      ["Can"],
-      ["go"],
+  it("a modal question has no phrase unless the rest of the chain makes one", () => {
+    expect(frames({ mode: modalMode, modal: ModalVerb.can, interrogative: true })).toEqual([]);
+    expect(
+      layout({ mode: modalMode, modal: ModalVerb.can, perfect: true, interrogative: true })
+    ).toEqual([
+      [false, ["Can"]],
+      [false, ["he"]],
+      [true, ["have", "gone"]],
+      [false, ["?"]],
     ]);
   });
 
@@ -204,8 +255,9 @@ describe("in every combination", () => {
                     );
 
   // Counted here from scratch, not with the code under test: the words that
-  // are a verb of the chain, so a "not" on its own is not one
-  const chainRoles = new Set<WordRole>([WordRole.modal, WordRole.aux, WordRole.passive, WordRole.verb]);
+  // are a verb of the chain, so a "not" on its own is not one, and neither is
+  // the modal
+  const chainRoles = new Set<WordRole>([WordRole.aux, WordRole.passive, WordRole.verb]);
   const chainLength = (ws: ReturnType<typeof words>) =>
     ws.filter((w) => (w.parts?.map((p) => p.role) ?? [w.role]).some((r) => chainRoles.has(r)))
       .length;
@@ -227,7 +279,7 @@ describe("in every combination", () => {
 
   it("only words of the phrase are framed", () => {
     const wrong = sentences.filter((ws) =>
-      groupVerbPhrase(ws).some((c) => c.verbPhrase && !c.words.every(isInPhrase))
+      groupVerbPhrase(ws).some((c) => c.verbPhrase && !c.words.every((w) => isInPhrase(w, ws)))
     );
 
     expect(wrong.length).toBe(0);
@@ -239,6 +291,39 @@ describe("in every combination", () => {
         (c) =>
           c.verbPhrase &&
           c.words.some((w) => w.role === WordRole.object || w.role === WordRole.end)
+      )
+    );
+
+    expect(wrong.length).toBe(0);
+  });
+
+  it("a plain modal is never framed, nor its negation", () => {
+    const wrong = sentences.filter((ws) =>
+      groupVerbPhrase(ws).some(
+        (c) =>
+          c.verbPhrase &&
+          c.words.some(
+            (w) =>
+              !w.parts &&
+              (w.role === WordRole.modal ||
+                (w.role === WordRole.negation && ws.some((v) => v.role === WordRole.modal)))
+          )
+      )
+    );
+
+    expect(wrong.length).toBe(0);
+  });
+
+  it("a contracted modal is framed only when it also holds an auxiliary (should've)", () => {
+    const wrong = sentences.filter((ws) =>
+      groupVerbPhrase(ws).some(
+        (c) =>
+          c.verbPhrase &&
+          c.words.some(
+            (w) =>
+              w.parts?.some((p) => p.role === WordRole.modal) &&
+              !w.parts.some((p) => p.role === WordRole.aux)
+          )
       )
     );
 
@@ -271,7 +356,7 @@ describe("in every combination", () => {
 
       return (
         chunks.some((c) => c.verbPhrase) &&
-        chunks.some((c) => !c.verbPhrase && c.words.some(isInPhrase))
+        chunks.some((c) => !c.verbPhrase && c.words.some((w) => isInPhrase(w, ws)))
       );
     });
 
