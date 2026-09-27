@@ -10,12 +10,12 @@
    var(--color-role-*) in an inline style, so it must be able to rely on the
    variables existing whatever utilities happen to be in use. */
 @theme static {
-  /* The platform's own UI font: San Francisco on macOS, Segoe UI (Variable on
-     Windows 11) on Windows. Nothing to download, and it looks native on both.
-     Helvetica Neue / Arial cover older systems, and the generic sans-serif is
-     the last resort everywhere else. */
-  --font-sans: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI",
-    "Helvetica Neue", Arial, sans-serif;
+  /* Geist, shipped with the app (the @fontsource-variable/geist import in
+     main.ts), so no font CDN is involved. One variable file covers every
+     weight the page uses. The platform's UI font stands in while it loads
+     and wherever a character falls outside its subsets. */
+  --font-sans: "Geist Variable", system-ui, -apple-system, "Segoe UI Variable Text",
+    "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 
   /* the blue-violet stop of the favicon gradient */
   --color-brand: #6c63ff;
