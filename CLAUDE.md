@@ -20,7 +20,7 @@ Conventions used so far: split the work into logical commits (docs in their own)
 
 **Sentence Constructor**: a Svelte 5 + Vite + Tailwind CSS v4 + TypeScript app, live at https://axln.github.io/eng-tense-aspect/ (repository `axln/eng-tense-aspect`, public). It replaces the big English tense tables: the user picks a subject, verb, object and aspect, and it generates the sentence for every tense/aspect/voice/negation/question combination, drawing each word as a tile labelled and coloured by its grammatical role. The audience is ESL learners and their teachers. It is a static site with no backend. Yarn Classic is the package manager (`yarn.lock`); tests use vitest; there is no ESLint or Prettier. It is MIT licensed (`LICENSE`, and `"license": "MIT"` in `package.json`), copyright Alexey Nesterenko.
 
-`README.md` is for GitHub visitors, with a screenshot in `docs/screenshot.png` (taken at v0.1.10). Keep the facts in it checkable (it states 7 pronouns, 114 verbs, 11 modals) and retake the screenshot if the UI changes noticeably.
+`README.md` is for GitHub visitors, with a screenshot in `docs/screenshot.png` (taken at v0.1.13). Keep the facts in it checkable (it states 7 pronouns, 114 verbs, 11 modals) and retake the screenshot if the UI changes noticeably.
 
 ## Commands
 
@@ -75,7 +75,7 @@ The three aspect checkboxes (perfect, continuous, passive) map straight onto `ve
 
 ### Styling (Tailwind v4)
 
-Tailwind comes in through `@tailwindcss/vite` (before the Svelte plugin in `vite.config.ts`), and `src/app.css` is its entry: `@import "tailwindcss"`, then the design tokens in `@theme static` (the system UI font stack, `--color-brand`, and the `--color-role-*` colours). There are no `<style>` blocks; components are styled with utility classes in the markup. Things that will bite:
+Tailwind comes in through `@tailwindcss/vite` (before the Svelte plugin in `vite.config.ts`), and `src/app.css` is its entry: `@import "tailwindcss"`, then the design tokens in `@theme static` (the Geist font, bundled from `@fontsource-variable/geist` and imported in `main.ts` so no CDN is involved, `--color-brand`, and the `--color-role-*` colours). There are no `<style>` blocks; components are styled with utility classes in the markup. Things that will bite:
 
 - **Class names must appear in the source in full.** Tailwind finds them by reading the text, so `bg-role-${role}` generates nothing and fails silently. `Word.svelte` keeps an explicit `roleBackground` lookup for this reason; `App.svelte` writes its repeated class strings out as constants (`field`, `select`, `chip`, `button`). Compose classes with Svelte's clsx-style `class` value, not string interpolation or the `class:` directive: `class={[field, "bg-role-object", { "opacity-45": objects.length === 0 }]}` (an array of strings, with objects for the conditional ones; falsy entries are dropped). Every class name in it is still a complete string literal, so Tailwind finds it.
 - **Only `.svelte` files are scanned for class names** (`@import "tailwindcss" source(none)` plus `@source "./**/*.svelte"` in `app.css`). Tailwind's default is to read every text file, which turned the class names quoted in this file into unused CSS. The flip side: a class name written in a `.ts` file generates nothing, so keep class strings in the components.
